@@ -1,0 +1,627 @@
+{
+  "global": {
+    "companyName": "TEYAC",
+    "companyTagline": "Construction",
+    "companyNameFull": "TEYAC Investments (Pvt) Ltd",
+    "tradingAs": "TEYAC Construction (Pvt) Ltd",
+    "phone": "+263772541729",
+    "phoneAlt": "+263719541729",
+    "teleFax": "0272317549",
+    "email": "teyacinvestments@gmail.com",
+    "addressChipinge": "936 Checheche Growth Point, Chipinge, Zimbabwe",
+    "addressPostal": "20367 Unit G Extension, Seke, Chitungwiza",
+    "registration": "No. 4835/2012",
+    "bankAccountName": "TEYAC Investments (Pvt) Ltd",
+    "bankName": "AgriBank",
+    "logo": "images/teyac-construction-logo.jpg",
+    "metaTitle": "TEYAC Construction | Zimbabwe",
+    "metaDescription": "TEYAC Construction provides civil works, structural steel and telecommunications engineering services across Zimbabwe.",
+    "metaKeywords": "TEYAC Construction, construction company Zimbabwe, civil engineering Zimbabwe, structural steel Zimbabwe, telecommunications infrastructure Zimbabwe, GSM tower erection Zimbabwe, base station construction Zimbabwe, Chipinge construction company"
+  },
+  "home": {
+    "hero": {
+      "image": "images/teyac-construction-crew-casting-a-reinforced-con.jpg",
+      "eyebrow": "Built for results · Established 2012",
+      "headline": "Engineering Zimbabwe’s next chapter.",
+      "copy": "Practical civil works, structural steel and telecommunications infrastructure—planned carefully and built to perform."
+    },
+    "trustBand": {
+      "label": "Trusted experience with",
+      "names": [
+        "ECONET",
+        "CETC 22",
+        "DPA",
+        "BEST GROUP",
+        "FASTFORM"
+      ]
+    },
+    "capabilities": {
+      "kicker": "Core capabilities",
+      "heading": "From the ground up, we make complex work practical.",
+      "cards": [
+        {
+          "number": "01",
+          "title": "Civil & Earthworks",
+          "text": "Roads, housing developments, base stations, site preparation, bulk earthworks and plant hire."
+        },
+        {
+          "number": "02",
+          "title": "Structural Steel",
+          "text": "Towers, fencing, roof trusses, storage structures, staircases and engineered steelwork."
+        },
+        {
+          "number": "03",
+          "title": "Telecommunications",
+          "text": "BTS, RF, microwave-link and optical-fibre installations and maintenance.",
+          "image": "images/workers-on-structural-scaffolding.jpg",
+          "imageAlt": "Workers on structural scaffolding"
+        }
+      ]
+    },
+    "whoWeAre": {
+      "kicker": "Who we are",
+      "heading": "Local knowledge. Multidisciplinary delivery.",
+      "lead": "TEYAC Investments (Pvt) Ltd is a wholly Zimbabwean company delivering design, construction, repair and maintenance services.",
+      "body": "Our teams coordinate engineering expertise, procurement, implementation, supervision and management to keep projects moving."
+    },
+    "featuredProjects": {
+      "kicker": "Proven experience",
+      "heading": "Infrastructure delivered across Zimbabwe.",
+      "cards": [
+        {
+          "tag": "Completed",
+          "image": "images/completed-secured-telecommunications-tower-site.jpg",
+          "imageAlt": "Completed secured telecommunications tower site",
+          "title": "Telecommunications civils",
+          "text": "Secured tower foundation and site works delivered for a base-station client."
+        },
+        {
+          "tag": "Civil & structural",
+          "image": "images/timber-formwork-built-for-a-reinforced-concrete.jpg",
+          "imageAlt": "Timber formwork built for a reinforced concrete pier",
+          "title": "Foundation & formwork",
+          "text": "Reinforced concrete pier construction as part of a multidisciplinary civil project."
+        }
+      ]
+    },
+    "whyChoose": {
+      "kicker": "Why choose TEYAC",
+      "heading": "Big-business capability, small-business responsiveness.",
+      "items": [
+        {
+          "number": "01",
+          "title": "14 years on the ground",
+          "text": "Zimbabwean-owned and operating since June 2012, with a track record across industrial, commercial and infrastructure clients."
+        },
+        {
+          "number": "02",
+          "title": "One team, three disciplines",
+          "text": "Civil, structural steel and telecommunications capability under one roof, so multidisciplinary projects need fewer contractors to coordinate."
+        },
+        {
+          "number": "03",
+          "title": "Established network",
+          "text": "A long-standing network of contractors and suppliers gives clients access to the right equipment, operators and materials for any size of project."
+        },
+        {
+          "number": "04",
+          "title": "Quick response, real flexibility",
+          "text": "From a single service call to a multi-million-dollar project, our structure lets us respond fast without losing professional control."
+        },
+        {
+          "number": "05",
+          "title": "Safety-conscious delivery",
+          "text": "A stringent S.H.E policy keeps our people, our clients’ communities and the environment safe on every site."
+        },
+        {
+          "number": "06",
+          "title": "Invested in our people",
+          "text": "We maintain a database of qualified, experienced personnel and keep investing in their training and development."
+        }
+      ]
+    },
+    "ctaHome": {
+      "kicker": "Start a conversation",
+      "heading": "Have a project in mind?",
+      "text": "Speak directly with the TEYAC team about your site, scope and quotation."
+    }
+  },
+  "about": {
+    "hero": {
+      "eyebrow": "About TEYAC",
+      "title": "Built on expertise, integrity and practical delivery.",
+      "text": "Zimbabwean-owned engineering capability serving industrial, commercial and infrastructure clients."
+    },
+    "intro": {
+      "kicker": "Our company",
+      "heading": "Engineering experience with small-business flexibility.",
+      "lead": "TEYAC Investments (Pvt) Ltd, trading as TEYAC Construction (Pvt) Ltd, is a wholly Zimbabwean-owned engineering company incorporated on 26 June 2012.",
+      "body1": "We are a fast-growing civil, electrical, mechanical and telecommunications engineering company, offering design and construction as well as repair and maintenance contracting to industrial, commercial and infrastructure clients across Zimbabwe and beyond. Whether it’s a single service call or a multi-million-dollar project, our structure gives clients big-business solutions with small-business flexibility, quick response and fast turnaround.",
+      "body2": "Our expertise is evidenced by the quality of our past work in civil construction, structural-steel fabrication and erection, and telecommunications installations, repairs and maintenance. We maintain a database of some of the most qualified and experienced personnel in the field, backed by a best-practice S.H.E policy that keeps our people, our clients’ communities and the environment safe.",
+      "facts": [
+        {
+          "value": "2012",
+          "label": "Established"
+        },
+        {
+          "value": "4835/2012",
+          "label": "Registration"
+        },
+        {
+          "value": "Zimbabwe",
+          "label": "Locally owned"
+        },
+        {
+          "value": "80m",
+          "label": "Max tower height"
+        }
+      ]
+    },
+    "capabilities": {
+      "kicker": "What we bring",
+      "heading": "Capability across the complete project cycle.",
+      "items": [
+        {
+          "number": "01",
+          "title": "Engineering & delivery",
+          "text": "Our experience covers civil construction, structural-steel fabrication and erection, telecommunications installations, repairs and maintenance. We coordinate site teams, technical requirements and practical construction methods around the needs of each project."
+        },
+        {
+          "number": "02",
+          "title": "Procurement & partnerships",
+          "text": "We work with an established network of contractors, suppliers and sector partners. That network supports access to suitable equipment, operators, materials and specialist knowledge for projects of different sizes and technical demands."
+        },
+        {
+          "number": "03",
+          "title": "People & supervision",
+          "text": "TEYAC maintains access to qualified and experienced field personnel. Our management approach brings together planning, project implementation, site supervision and clear accountability to keep work progressing safely and efficiently."
+        },
+        {
+          "number": "04",
+          "title": "Safety & responsibility",
+          "text": "Our S.H.E practices are intended to provide a safe working environment for employees, surrounding communities and the natural environment. Safety, quality and responsible delivery are treated as project requirements—not afterthoughts."
+        }
+      ]
+    },
+    "process": {
+      "kicker": "How we work",
+      "heading": "A clear path from enquiry to completion.",
+      "text": "Every assignment is shaped around the client’s scope, site conditions and programme.",
+      "steps": [
+        {
+          "title": "Understand the requirement",
+          "text": "Review the project type, location, technical needs and available plans."
+        },
+        {
+          "title": "Plan the solution",
+          "text": "Define the work method, resources, programme and commercial scope."
+        },
+        {
+          "title": "Mobilise and deliver",
+          "text": "Coordinate personnel, materials, equipment and on-site execution."
+        },
+        {
+          "title": "Supervise and report",
+          "text": "Monitor workmanship, safety, progress and communication."
+        },
+        {
+          "title": "Complete and support",
+          "text": "Close out the work and provide maintenance support where required."
+        }
+      ]
+    },
+    "missionVisionGoal": [
+      {
+        "label": "Vision",
+        "title": "First-choice contractor.",
+        "text": "To be the first-choice contractor for civil and electro-technical solutions of unmatched quality in the local market and beyond."
+      },
+      {
+        "label": "Mission",
+        "title": "High-quality industrial solutions.",
+        "text": "To enable industry and commerce to access industrial solutions of high quality and excellence."
+      },
+      {
+        "label": "Operational goal",
+        "title": "Prompt, safe and efficient service.",
+        "text": "To provide customer satisfaction through trained professionals committed to meeting client needs."
+      }
+    ],
+    "values": {
+      "kicker": "Our values",
+      "heading": "Standards that guide every project.",
+      "items": [
+        {
+          "title": "Integrity",
+          "text": "Honest, transparent and professional dealings with clients and stakeholders."
+        },
+        {
+          "title": "Consistency",
+          "text": "Reliable quality across the delivery of products and services."
+        },
+        {
+          "title": "Customer orientation",
+          "text": "Solutions shaped around relationships, operational needs and value for money."
+        },
+        {
+          "title": "Creativity & innovation",
+          "text": "Practical engineering ideas that maintain strong industrial standards."
+        },
+        {
+          "title": "Safety & health",
+          "text": "A disciplined S.H.E approach protecting people, communities and the environment."
+        },
+        {
+          "title": "Human capital plus",
+          "text": "Continuous investment in our people through training and association with other organisations and stakeholders."
+        }
+      ]
+    },
+    "leadership": {
+      "kicker": "Leadership",
+      "heading": "Accountable direction.",
+      "people": [
+        {
+          "initials": "ME",
+          "name": "Mugarisi Emanuel",
+          "role": "Managing Director & Executive Chairman"
+        },
+        {
+          "initials": "SM",
+          "name": "Sibongile M. Mugarisi",
+          "role": "Finance Director"
+        }
+      ]
+    }
+  },
+  "services": {
+    "hero": {
+      "eyebrow": "Our services",
+      "title": "Integrated expertise for demanding sites.",
+      "text": "Design, construction, installation, repair and maintenance across three core business lines."
+    },
+    "lines": [
+      {
+        "id": "civil",
+        "number": "01",
+        "kicker": "Civil & earthworks",
+        "heading": "From site preparation to finished infrastructure.",
+        "lead": "TEYAC provides civil and earthwork engineering for industrial, telecommunications and development projects.",
+        "subservices": [
+          {
+            "title": "Base-station construction",
+            "text": "Construction and maintenance services for telecommunications base-station civils."
+          },
+          {
+            "title": "Dams & catchment works",
+            "text": "Design, construction and maintenance of dams, including catchment calculations and capacity-holding assessments."
+          },
+          {
+            "title": "Roads",
+            "text": "Geo surveys and navigation designs, construction, surfacing, repair and maintenance."
+          },
+          {
+            "title": "Housing developments",
+            "text": "Project layouts, waterway drainage, sewerage reticulation and house construction."
+          },
+          {
+            "title": "Site works & earthmoving",
+            "text": "Site hardening, bulk earthworks, site preparation, hard-stand areas and contract cartage."
+          },
+          {
+            "title": "Plant hire & disposal",
+            "text": "Earthmoving equipment and plant hire, plus supply and disposal of fill material — including specialist environmental earth-moving for contaminated material."
+          }
+        ]
+      },
+      {
+        "id": "steel",
+        "number": "02",
+        "kicker": "Structural steel",
+        "heading": "Fabrication, erection and dismantling.",
+        "lead": "We undertake structural steel projects of any magnitude — structural design, erection and dismantling — tailored to each client’s requirements.",
+        "subservices": [
+          {
+            "title": "GSM communication towers",
+            "text": "Erection of communication towers up to 80m in height, including civil works — hot-dip galvanised and painted to local and international aviation standards."
+          },
+          {
+            "title": "Floodlight towers",
+            "text": "Erection of floodlight towers up to 30m, including civils and electricals, in 3-leg or 4-leg designs, all hot-dip galvanised for corrosion protection."
+          },
+          {
+            "title": "Palisade fencing & burglar screens",
+            "text": "Installation of hot-dip galvanised and/or painted tubular or angular palisade fencing and burglar screens."
+          },
+          {
+            "title": "Storage & structural steelwork",
+            "text": "Storage spheres, roof trusses, staircases and stair rails."
+          }
+        ]
+      },
+      {
+        "id": "telecoms",
+        "number": "03",
+        "kicker": "Telecommunications",
+        "heading": "Installation, upgrades and maintenance.",
+        "lead": "Our technical teams support wireless and fibre networks from site survey through installation, testing and maintenance.",
+        "subservices": [
+          {
+            "title": "BTS & RF installations",
+            "text": "Upgrades and maintenance on BTS and RF installations, with specialist experience on hilltop and rooftop sites — cabinet assembly, shelter assembly, antenna mounting and RRU installations."
+          },
+          {
+            "title": "Microwave links",
+            "text": "Installation and maintenance of microwave links in 1+0, 1+1, space-diversity and XPIC configurations, on NEC Pasolink V4 and Neo Pasolink equipment."
+          },
+          {
+            "title": "Optical fibre",
+            "text": "Optical-fibre splicing and testing, including trenching, cable laying and local-authority liaison."
+          },
+          {
+            "title": "Site survey & planning",
+            "text": "Site surveys, technical analysis, drive tests and upgrade planning for proposed network changes."
+          }
+        ]
+      }
+    ]
+  },
+  "projects": {
+    "hero": {
+      "eyebrow": "Selected projects",
+      "title": "Practical delivery across Zimbabwe.",
+      "text": "Civil works, tower rigging, buildings and supporting infrastructure for recognised clients."
+    },
+    "featuredPhoto": {
+      "image": "images/completed-secured-telecommunications-tower-site-2.jpg",
+      "imageAlt": "Completed secured telecommunications tower site",
+      "caption": "Telecommunications civil works and secured tower infrastructure."
+    },
+    "projectList": [
+      {
+        "client": "Econet",
+        "status": "Ongoing",
+        "title": "Access-road rehabilitation",
+        "text": "St Annes, Goto, Dorowa Mine, Hwedza, Chimanimani, Chibunji & Gutu-Tongogara — ongoing"
+      },
+      {
+        "client": "Hualong Safaris",
+        "status": "Complete",
+        "title": "Tower rigging",
+        "text": "Musami Base Station, Murehwa"
+      },
+      {
+        "client": "Best Group",
+        "status": "Complete",
+        "title": "Civil and rigging construction",
+        "text": "Dema Econet Base Station"
+      },
+      {
+        "client": "Fastform Enterprises",
+        "status": "Complete",
+        "title": "14-room farmhouse construction",
+        "text": "Vhuti, Karoi"
+      },
+      {
+        "client": "CETC 22",
+        "status": "Complete",
+        "title": "Base-station civils and rigging",
+        "text": "Tanganda, Nyakunhuwa, Lundi Park Gweru, Chikekete, Siyakdovu, John Galt, St Michaels & Gozonyai-Hippo Valley"
+      },
+      {
+        "client": "Distributed Power Africa",
+        "status": "Complete",
+        "title": "Plinth construction",
+        "text": "Zamuchiya and Fombe sites"
+      }
+    ],
+    "onGround": [
+      {
+        "label": "Live",
+        "title": "Ongoing sites",
+        "text": "Tongogara (Gutu) — 45m tower rigging, Econet Wireless Zimbabwe\nMbada Diamonds — tower rigging, Econet Wireless Zimbabwe\nManicaland sites — tower torquing & painting, Econet Wireless Zimbabwe\nManicaland & Masvingo — vandalised-site maintenance, Econet Wireless Zimbabwe\nKaroi — lodge construction, Fastform Enterprises\nTanganda, Gwindingwi, King Mine & Chikukwa — access-road construction, Econet Wireless Zimbabwe"
+      },
+      {
+        "label": "Complete",
+        "title": "Recently finished",
+        "text": "Fombe site — plinth construction, Distributed Power Africa\nZamuchiya site — plinth construction, Distributed Power Africa\nShungu site, Kwekwe — tower rigging, Econet Wireless Zimbabwe"
+      }
+    ],
+    "tradeReferences": {
+      "kicker": "Trade references",
+      "heading": "Organisations in our project history.",
+      "names": [
+        "Econet",
+        "Hualong Safaris",
+        "Best Group",
+        "Fastform Enterprises",
+        "CETC 22",
+        "Distributed Power Africa"
+      ]
+    },
+    "gallery": {
+      "kicker": "Project gallery",
+      "heading": "From site setup to completed structure.",
+      "categories": [
+        {
+          "number": "01",
+          "title": "Site establishment & plant",
+          "items": [
+            {
+              "image": "images/wheel-loader-and-site-vehicle-mobilised-to-a-pro.jpg",
+              "imageAlt": "Wheel loader and site vehicle mobilised to a project site",
+              "caption": "Site plant mobilisation"
+            },
+            {
+              "image": "images/standby-generator-transported-to-site-at-night.jpg",
+              "imageAlt": "Standby generator transported to site at night",
+              "caption": "Generator delivered to site"
+            },
+            {
+              "image": "images/concrete-mixers-staged-on-a-flatbed-truck.jpg",
+              "imageAlt": "Concrete mixers staged on a flatbed truck",
+              "caption": "Concrete mixers staged for a pour"
+            },
+            {
+              "image": "images/compressor-equipment-loaded-for-transport-to-sit.jpg",
+              "imageAlt": "Compressor equipment loaded for transport to site",
+              "caption": "Compressor equipment loaded for transport"
+            },
+            {
+              "image": "images/stockpile-of-aggregate-for-concrete-production.jpg",
+              "imageAlt": "Stockpile of aggregate for concrete production",
+              "caption": "Aggregate stockpiled for concrete production"
+            }
+          ]
+        },
+        {
+          "number": "02",
+          "title": "Foundations & reinforcement",
+          "items": [
+            {
+              "image": "images/steel-base-frame-installed-in-an-excavated-found.jpg",
+              "imageAlt": "Steel base frame installed in an excavated foundation pit",
+              "caption": "Base-station foundation frame installation"
+            },
+            {
+              "image": "images/mast-footing-set-into-a-foundation-pit.jpg",
+              "imageAlt": "Mast footing set into a foundation pit",
+              "caption": "Mast footing installation"
+            },
+            {
+              "image": "images/site-team-levelling-a-tower-footing.jpg",
+              "imageAlt": "Site team levelling a tower footing",
+              "caption": "Levelling a tower footing"
+            },
+            {
+              "image": "images/reinforcement-mesh-set-inside-timber-formwork.jpg",
+              "imageAlt": "Reinforcement mesh set inside timber formwork",
+              "caption": "Reinforcement mesh and formwork"
+            },
+            {
+              "image": "images/timber-formwork-built-for-a-reinforced-concrete.jpg",
+              "imageAlt": "Timber formwork built for a reinforced concrete pier",
+              "caption": "Formwork for a reinforced pier"
+            },
+            {
+              "image": "images/site-crew-compacting-ground-near-a-steel-tower-s.jpg",
+              "imageAlt": "Site crew compacting ground near a steel tower structure",
+              "caption": "Compaction works at a tower site"
+            },
+            {
+              "image": "images/reinforcement-steel-delivered-to-a-base-station.jpg",
+              "imageAlt": "Reinforcement steel delivered to a base-station site",
+              "caption": "Reinforcement steel delivered to site"
+            },
+            {
+              "image": "images/reinforced-footing-formwork-with-steel-cross-bra.jpg",
+              "imageAlt": "Reinforced footing formwork with steel cross-bracing",
+              "caption": "Reinforced footing formwork"
+            }
+          ]
+        },
+        {
+          "number": "03",
+          "title": "Concrete works",
+          "items": [
+            {
+              "image": "images/concrete-being-pumped-into-a-reinforced-foundati.jpg",
+              "imageAlt": "Concrete being pumped into a reinforced foundation trench",
+              "caption": "Pumping concrete into the foundation"
+            },
+            {
+              "image": "images/site-crew-placing-concrete-into-a-reinforced-tre.jpg",
+              "imageAlt": "Site crew placing concrete into a reinforced trench",
+              "caption": "Concrete pour in progress"
+            },
+            {
+              "image": "images/worker-finishing-the-edge-of-a-fresh-concrete-po.jpg",
+              "imageAlt": "Worker finishing the edge of a fresh concrete pour",
+              "caption": "Finishing a concrete pour"
+            },
+            {
+              "image": "images/placing-concrete-into-a-reinforced-footing.jpg",
+              "imageAlt": "Placing concrete into a reinforced footing",
+              "caption": "Placing concrete into a reinforced footing"
+            }
+          ]
+        },
+        {
+          "number": "04",
+          "title": "Civils, roads & security",
+          "items": [
+            {
+              "image": "images/stone-pitched-drainage-channel-under-constructio.jpg",
+              "imageAlt": "Stone-pitched drainage channel under construction",
+              "caption": "Stone-pitched drainage channel"
+            },
+            {
+              "image": "images/road-construction-crew-building-a-stone-lined-ch.jpg",
+              "imageAlt": "Road construction crew building a stone-lined channel",
+              "caption": "Road construction crew at work"
+            },
+            {
+              "image": "images/electrified-perimeter-security-fencing.jpg",
+              "imageAlt": "Electrified perimeter security fencing",
+              "caption": "Electrified perimeter security"
+            },
+            {
+              "image": "images/team-installing-perimeter-palisade-fencing.jpg",
+              "imageAlt": "Team installing perimeter palisade fencing",
+              "caption": "Perimeter fencing installation"
+            },
+            {
+              "image": "images/teyac-field-team-in-full-personal-protective-equ.jpg",
+              "imageAlt": "TEYAC field team in full personal protective equipment",
+              "caption": "TEYAC field team in full PPE"
+            }
+          ]
+        }
+      ]
+    },
+    "teamPhoto": {
+      "image": "images/teyac-field-crew-standing-beside-a-project-vehic.jpg",
+      "imageAlt": "TEYAC field crew standing beside a project vehicle",
+      "caption": "The TEYAC team on site"
+    },
+    "ctaProjects": {
+      "kicker": "Your next project",
+      "heading": "Talk to our team about the scope."
+    }
+  },
+  "contact": {
+    "hero": {
+      "eyebrow": "Contact TEYAC",
+      "title": "Let’s discuss what you need built.",
+      "text": "Choose WhatsApp for a direct chat, email us your documents, or call the team."
+    },
+    "intro": {
+      "kicker": "Fastest response",
+      "heading": "Message the TEYAC team directly.",
+      "text": "Include the project type, site location, expected start date and any plans or photographs you already have."
+    },
+    "companyDetails": {
+      "altNumber": "+263 719 541 729",
+      "chipingeOffice": "936 Checheche Growth Point\nChipinge, Zimbabwe",
+      "postalAddress": "20367 Unit G Extension\nSeke, Chitungwiza",
+      "teleFax": "(027) 2317549",
+      "registration": "TEYAC Investments (Pvt) Ltd\nNo. 4835/2012",
+      "bankingDetails": "Account name: TEYAC Investments (Pvt) Ltd\nBank: AgriBank"
+    },
+    "map": {
+      "title": "Chipinge office",
+      "src": "https://www.google.com/maps?q=936+Checheche+Growth+Point,+Chipinge,+Zimbabwe&output=embed"
+    }
+  },
+  "footer": {
+    "description": "Zimbabwean-owned civil, structural-steel and telecommunications engineering contractor, delivering design, construction, repair and maintenance since 2012.",
+    "bottomLine1": "TEYAC Investments (Pvt) Ltd · Registration No. 4835/2012"
+  },
+  "pricing": {
+    "enabled": false,
+    "kicker": "Pricing",
+    "heading": "Indicative packages.",
+    "intro": "Every project is quoted individually based on scope and site conditions — these are starting guides only.",
+    "packages": []
+  }
+}

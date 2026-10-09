@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>TEYAC Website Admin</title>
+<link rel="icon" href="images/favicon-32.png" sizes="32x32" type="image/png">
+<style>
+  :root{
+    --navy:#0f2436; --navy-2:#162f45; --ink:#1a2630; --muted:#5c6c79;
+    --line:#dfe6ec; --bg:#f3f6f8; --card:#ffffff;
+    --accent:#c8732f; --accent-dark:#a85f23;
+    --green:#1f9254; --green-dark:#187a44;
+    --red:#c0392b; --red-bg:#fdecea;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink); min-height:100vh;
+  }
+  a{color:var(--accent-dark);}
+  button{font-family:inherit;}
+  input,textarea,select{font-family:inherit; font-size:14px;}
+
+  /* ---------- Login screen ---------- */
+  #loginScreen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+    background:linear-gradient(135deg,#0f2436,#1c3f54 55%,#0f2436);
+  }
+  .login-card{
+    background:var(--card); border-radius:16px; max-width:560px; width:100%;
+    padding:36px 36px 30px; box-shadow:0 30px 60px -20px rgba(0,0,0,.5);
+  }
+  .login-logo{display:flex; align-items:center; gap:12px; margin-bottom:6px;}
+  .login-logo img{height:40px; width:auto; border-radius:6px;}
+  .login-logo .word{font-weight:800; font-size:20px; letter-spacing:.02em; color:var(--navy);}
+  .login-logo .word span{display:block; font-size:10px; font-weight:600; letter-spacing:.14em; color:var(--muted);}
+  .login-card h1{font-size:19px; margin:18px 0 4px;}
+  .login-card p.sub{color:var(--muted); font-size:14px; margin:0 0 22px; line-height:1.5;}
+  .field{margin-bottom:16px;}
+  .field label{display:block; font-size:12.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:6px;}
+  .field input[type=text], .field input[type=password]{
+    width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:8px; background:#fafcfd;
+  }
+  .field input:focus, textarea:focus, select:focus{outline:2px solid var(--accent); outline-offset:1px;}
+  .field .hint{font-size:12.5px; color:var(--muted); margin-top:5px; line-height:1.5;}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    border:none; border-radius:8px; padding:12px 18px; font-weight:700; font-size:14px;
+    cursor:pointer; transition:background .15s;
+  }
+  .btn-primary{background:var(--accent); color:#fff; width:100%;}
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-primary:disabled{background:#c9b6a3; cursor:not-allowed;}
+  .btn-ghost{background:transparent; color:var(--navy); border:1px solid var(--line);}
+  .btn-ghost:hover{background:#f0f3f5;}
+  .btn-danger{background:var(--red); color:#fff;}
+  .btn-danger:hover{background:#9f2d20;}
+  .btn-sm{padding:7px 11px; font-size:12.5px; border-radius:6px;}
+  .login-help{
+    margin-top:22px; padding-top:18px; border-top:1px solid var(--line);
+  }
+  .login-help summary{cursor:pointer; font-size:13.5px; font-weight:700; color:var(--navy);}
+  .login-help ol{margin:12px 0 0; padding-left:20px; font-size:13.5px; color:var(--ink); line-height:1.75;}
+  .login-help code{background:#eef2f4; padding:1px 5px; border-radius:4px; font-size:12.5px;}
+  .error-box{
+    background:var(--red-bg); color:var(--red); border:1px solid #f3c7c0; border-radius:8px;
+    padding:11px 13px; font-size:13.5px; margin-bottom:16px; display:none; line-height:1.5;
+  }
+  .spinner{
+    width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,.4);
+    border-top-color:#fff; animation:spin .7s linear infinite; display:inline-block;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ---------- Dashboard shell ---------- */
+  #dashboard{display:none; min-height:100vh;}
+  #dashboard.active{display:flex;}
+  .sidebar{
+    width:230px; flex:0 0 230px; background:var(--navy); color:#cfd9e0; min-height:100vh;
+    display:flex; flex-direction:column; position:sticky; top:0; align-self:flex-start; height:100vh; overflow-y:auto;
+  }
+  .sidebar-brand{padding:20px 18px 14px; display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(255,255,255,.08);}
+  .sidebar-brand img{height:30px; border-radius:5px;}
+  .sidebar-brand .t{font-weight:800; color:#fff; font-size:14.5px; line-height:1.2;}
+  .sidebar-brand .t span{display:block; font-size:9.5px; font-weight:600; color:#8ea2b2; letter-spacing:.1em;}
+  .tabs{list-style:none; margin:10px 0; padding:0; flex:1;}
+  .tabs li{margin:0;}
+  .tabs button{
+    width:100%; text-align:left; background:none; border:none; color:#b8c6d0; padding:11px 18px;
+    font-size:13.5px; font-weight:600; cursor:pointer; border-left:3px solid transparent;
+  }
+  .tabs button:hover{background:rgba(255,255,255,.05); color:#fff;}
+  .tabs button.active{background:rgba(255,255,255,.08); color:#fff; border-left-color:var(--accent);}
+  .sidebar-foot{padding:14px 18px 20px; border-top:1px solid rgba(255,255,255,.08); font-size:12px; color:#8ea2b2; word-break:break-word;}
+  .sidebar-foot button{
+    width:100%; margin-top:10px; background:rgba(255,255,255,.06); color:#e8edf0;
+    border:1px solid rgba(255,255,255,.18);
+  }
+  .sidebar-foot button:hover{background:rgba(255,255,255,.14);}
+
+  .main{flex:1; min-width:0; display:flex; flex-direction:column;}
+  .topbar{
+    position:sticky; top:0; z-index:5; background:#fff; border-bottom:1px solid var(--line);
+    padding:14px 28px; display:flex; align-items:center; justify-content:space-between; gap:16px;
+  }
+  .topbar h2{margin:0; font-size:17px;}
+  .topbar .status{font-size:12.5px; color:var(--muted);}
+  .topbar .status.dirty{color:var(--accent-dark); font-weight:700;}
+  .topbar .status.saved{color:var(--green-dark); font-weight:700;}
+  .topbar .status.error{color:var(--red); font-weight:700;}
+  .topbar-actions{display:flex; align-items:center; gap:10px;}
+
+  .content{padding:26px 28px 70px; max-width:880px;}
+  .group{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:20px; overflow:hidden;}
+  .group-head{padding:14px 20px; border-bottom:1px solid var(--line); background:#fafbfc;}
+  .group-head h3{margin:0; font-size:14.5px;}
+  .group-head p{margin:4px 0 0; font-size:12.5px; color:var(--muted); line-height:1.5;}
+  .group-body{padding:18px 20px;}
+  .f{margin-bottom:16px;}
+  .f:last-child{margin-bottom:0;}
+  .f label{display:block; font-size:12.5px; font-weight:700; color:var(--navy); margin-bottom:6px;}
+  .f .hint{font-size:12px; color:var(--muted); margin-top:5px; line-height:1.5;}
+  .f input[type=text], .f textarea, .f select{
+    width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:7px; background:#fafcfd;
+  }
+  .f textarea{resize:vertical; min-height:60px; line-height:1.5;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:640px){.row2{grid-template-columns:1fr;}}
+
+  .img-field{display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap;}
+  .img-preview{
+    width:110px; height:82px; border-radius:7px; background:#eef1f3 center/cover no-repeat;
+    border:1px solid var(--line); flex:0 0 auto;
+  }
+  .img-controls{flex:1; min-width:180px;}
+  .img-controls .path{font-size:12px; color:var(--muted); word-break:break-all; margin-bottom:6px;}
+
+  .list-items{display:flex; flex-direction:column; gap:10px; margin-bottom:12px;}
+  .list-item{border:1px solid var(--line); border-radius:8px; padding:12px 14px; background:#fcfdfd;}
+  .list-item-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .list-item-head .tag{font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;}
+  .item-actions{display:flex; gap:6px;}
+  .icon-btn{
+    background:#fff; border:1px solid var(--line); border-radius:6px; width:28px; height:28px;
+    display:inline-flex; align-items:center; justify-content:center; cursor:pointer; color:var(--navy); font-size:13px;
+  }
+  .icon-btn:hover{background:#f0f3f5;}
+  .icon-btn.danger{color:var(--red);}
+  .icon-btn:disabled{opacity:.35; cursor:default;}
+
+  .gallery-cat{border:1px solid var(--line); border-radius:9px; padding:14px; margin-bottom:14px; background:#fcfdfd;}
+  .gallery-cat-head{display:flex; gap:10px; align-items:flex-end; margin-bottom:10px;}
+  .gallery-cat-head .f{flex:1; margin:0;}
+  .gallery-items{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; margin-top:10px;}
+  .gallery-item{border:1px solid var(--line); border-radius:7px; padding:9px; background:#fff;}
+  .gallery-item .img-preview{width:100%; height:70px; margin-bottom:8px;}
+
+  .add-btn{
+    display:inline-flex; align-items:center; gap:6px; background:#eef2f4; color:var(--navy);
+    border:1px dashed #b7c2ca; border-radius:7px; padding:9px 14px; font-size:13px; font-weight:700; cursor:pointer;
+  }
+  .add-btn:hover{background:#e5eaed;}
+
+  .banner{
+    border-radius:8px; padding:12px 14px; font-size:13px; line-height:1.55; margin-bottom:16px;
+  }
+  .banner.info{background:#eaf2f7; color:#1c4b63; border:1px solid #c9dfea;}
+  .banner.warn{background:#fdf3e2; color:#8a5a0a; border:1px solid #f3dca8;}
+
+  .toggle-row{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .toggle-row input{width:17px; height:17px;}
+
+  .toast{
+    position:fixed; bottom:22px; right:22px; background:var(--navy); color:#fff; padding:13px 18px;
+    border-radius:9px; font-size:13.5px; box-shadow:0 12px 28px rgba(0,0,0,.25); display:none; max-width:360px; z-index:50;
+  }
+  .toast.show{display:block;}
+  .toast.err{background:var(--red);}
+  .toast.ok{background:var(--green-dark);}
+
+  @media (max-width:860px){
+    #dashboard.active{flex-direction:column;}
+    .sidebar{width:100%; flex:none; height:auto; position:relative; min-height:auto;}
+    .tabs{display:flex; overflow-x:auto; margin:0;}
+    .tabs li{flex:0 0 auto;}
+    .tabs button{border-left:none; border-bottom:3px solid transparent; white-space:nowrap;}
+    .tabs button.active{border-bottom-color:var(--accent);}
+    .sidebar-foot{display:none;}
+    .topbar{flex-wrap:wrap;}
+    .content{padding:18px 14px 60px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="images/teyac-construction-logo.jpg" alt="TEYAC">
+      <div class="word">TEYAC <span>WEBSITE ADMIN</span></div>
+    </div>
+    <h1>Sign in to edit your website</h1>
+    <p class="sub">Update text, photos and project details on teyacinvestments.co.zw without touching any code. Changes go live within about a minute of saving.</p>
+
+    <div id="loginError" class="error-box"></div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="fRepo">GitHub repository</label>
+        <input type="text" id="fRepo" placeholder="your-username/teyacinvestments" autocomplete="off">
+        <div class="hint">The repository that holds the website files, as <code>username/repository-name</code>.</div>
+      </div>
+      <div class="field">
+        <label for="fBranch">Branch</label>
+        <input type="text" id="fBranch" value="main" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="fToken">Access token</label>
+        <input type="password" id="fToken" placeholder="github_pat_..." autocomplete="off">
+        <div class="hint">This is like your admin password. See "How do I get an access token?" below if you don't have one yet.</div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:18px;">
+        <input type="checkbox" id="fRemember" checked style="width:16px;height:16px;">
+        Remember me on this computer
+      </label>
+      <button type="submit" class="btn btn-primary" id="loginBtn">Sign in</button>
+    </form>
+
+    <details class="login-help">
+      <summary>How do I get an access token?</summary>
+      <ol>
+        <li>Go to <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a> and sign in to your GitHub account.</li>
+        <li>Give it a name like <code>TEYAC Website Admin</code>.</li>
+        <li>Under "Repository access", choose <strong>Only select repositories</strong> and pick your website repository.</li>
+        <li>Under "Permissions" → "Repository permissions", set <strong>Contents</strong> to <strong>Read and write</strong>.</li>
+        <li>Click <strong>Generate token</strong> at the bottom, then copy the long code it shows you (starting with <code>github_pat_</code>).</li>
+        <li>Paste that code into the "Access token" box above. Keep it somewhere safe — GitHub only shows it to you once.</li>
+      </ol>
+    </details>
+  </div>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div id="dashboard">
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <img src="images/teyac-construction-logo.jpg" alt="TEYAC">
+      <div class="t">TEYAC <span>WEBSITE ADMIN</span></div>
+    </div>
+    <ul class="tabs" id="tabList"></ul>
+    <div class="sidebar-foot">
+      <div id="repoLabel"></div>
+      <button class="btn btn-ghost btn-sm" id="logoutBtn" style="width:100%;">Sign out</button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="topbar">
+      <h2 id="tabTitle">Global</h2>
+      <div class="topbar-actions">
+        <span class="status" id="statusText">All changes saved</span>
+        <a class="btn btn-ghost btn-sm" href="index.html" target="_blank" rel="noopener">View live site</a>
+        <button class="btn btn-primary btn-sm" id="saveBtn">Save changes</button>
+      </div>
+    </div>
+    <div class="content" id="tabContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="admin.js"></script>
+</body>
+</html>
