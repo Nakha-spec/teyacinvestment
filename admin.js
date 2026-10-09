@@ -78,7 +78,7 @@
     // Verify repo + token are valid and writable
     checkAccess: function () {
       var self = this;
-      return fetch(this.apiBase(), { headers: this.headers() }).then(function (res) {
+      return fetch(this.apiBase() + '?_=' + Date.now(), { headers: this.headers(), cache: 'no-store' }).then(function (res) {
         if (res.status === 404) throw new Error('Repository not found. Check the "owner/repository" spelling and make sure the token has access to it.');
         if (res.status === 401) throw new Error('That access token was not accepted. Double-check you copied the whole token.');
         if (!res.ok) throw new Error('GitHub returned an error (status ' + res.status + '). Please try again.');
@@ -92,7 +92,8 @@
     },
     getFile: function (path) {
       var self = this;
-      return fetch(this.apiBase() + '/contents/' + path + '?ref=' + encodeURIComponent(this.cfg.branch), { headers: this.headers() })
+      var url = this.apiBase() + '/contents/' + path + '?ref=' + encodeURIComponent(this.cfg.branch) + '&_=' + Date.now();
+      return fetch(url, { headers: this.headers(), cache: 'no-store' })
         .then(function (res) {
           if (res.status === 404) throw new Error('Could not find "' + path + '" in the repository.');
           if (!res.ok) return res.text().then(function (t) { throw new Error('GitHub error reading ' + path + ': ' + res.status + ' ' + t); });
