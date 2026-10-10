@@ -149,6 +149,42 @@
         var pub = getClient().storage.from(STORAGE_BUCKET).getPublicUrl(path);
         return pub.data.publicUrl;
       });
+    },
+    // Media library: list every file in the uploads folder, newest first.
+    listMedia: function () {
+      return getClient().storage.from(STORAGE_BUCKET).list('uploads', {
+        limit: 500,
+        sortBy: { column: 'created_at', order: 'desc' }
+      }).then(function (res) {
+        if (res.error) throw new Error('Could not load media library: ' + res.error.message);
+        return (res.data || []).filter(function (f) { return f && f.name && f.name !== '.emptyFolderPlaceholder'; });
+      });
+    },
+    // Add a brand-new file to the media library.
+    uploadMedia: function (file, filename) {
+      var path = 'uploads/' + filename;
+      return getClient().storage.from(STORAGE_BUCKET).upload(path, file, { upsert: false }).then(function (res) {
+        if (res.error) throw new Error('Could not upload file: ' + res.error.message);
+      });
+    },
+    // Overwrite an existing file at the same path/URL — anywhere that URL is
+    // already used in your content will show the new file automatically,
+    // with no need to re-save that content.
+    replaceMedia: function (filename, file) {
+      var path = 'uploads/' + filename;
+      return getClient().storage.from(STORAGE_BUCKET).upload(path, file, { upsert: true }).then(function (res) {
+        if (res.error) throw new Error('Could not replace file: ' + res.error.message);
+      });
+    },
+    deleteMedia: function (filename) {
+      var path = 'uploads/' + filename;
+      return getClient().storage.from(STORAGE_BUCKET).remove([path]).then(function (res) {
+        if (res.error) throw new Error('Could not delete file: ' + res.error.message);
+      });
+    },
+    // Synchronous — matches how getPublicUrl behaves on the real client.
+    getMediaPublicUrl: function (filename) {
+      return getClient().storage.from(STORAGE_BUCKET).getPublicUrl('uploads/' + filename).data.publicUrl;
     }
   };
 
@@ -477,7 +513,7 @@
     content: null,
     pendingUploads: {}, // path -> {filename, dataUrl, file}
     dirty: false,
-    activeTab: 'global',
+    activeTab: '__dashboard',
     saving: false,
     email: ''
   };
@@ -645,9 +681,12 @@
      ============================================================ */
   function renderSidebar() {
     var ul = $('#tabList');
-    ul.innerHTML = SCHEMA.map(function (tab) {
-      return '<li><button data-tab="' + tab.id + '">' + escapeHtml(tab.label) + '</button></li>';
-    }).join('') + '<li><button data-tab="__messages">Messages</button></li>';
+    ul.innerHTML = '<li><button data-tab="__dashboard">Dashboard</button></li>' +
+      SCHEMA.map(function (tab) {
+        return '<li><button data-tab="' + tab.id + '">' + escapeHtml(tab.label) + '</button></li>';
+      }).join('') +
+      '<li><button data-tab="__messages">Messages</button></li>' +
+      '<li><button data-tab="__media">Media Library</button></li>';
     $all('button[data-tab]', ul).forEach(function (btn) {
       btn.addEventListener('click', function () { switchTab(btn.getAttribute('data-tab')); });
     });
@@ -660,11 +699,25 @@
     });
     window.scrollTo(0, 0);
 
+    if (id === '__dashboard') {
+      $('#tabTitle').textContent = 'Dashboard';
+      $('#saveBtn').style.display = 'none';
+      $('#statusText').style.display = 'none';
+      loadDashboardTab();
+      return;
+    }
     if (id === '__messages') {
       $('#tabTitle').textContent = 'Messages';
       $('#saveBtn').style.display = 'none';
       $('#statusText').style.display = 'none';
       loadMessagesTab();
+      return;
+    }
+    if (id === '__media') {
+      $('#tabTitle').textContent = 'Media Library';
+      $('#saveBtn').style.display = 'none';
+      $('#statusText').style.display = 'none';
+      loadMediaTab();
       return;
     }
     $('#saveBtn').style.display = '';
@@ -676,15 +729,252 @@
   }
 
   /* ============================================================
+     Dashboard tab
+     ============================================================ */
+  function statCard(label, value, sub) {
+    return '<div class="stat-card"><div class="stat-value">' + escapeHtml(value) + '</div>' +
+      '<div class="stat-label">' + escapeHtml(label) + '</div>' +
+      '<div class="stat-sub">' + escapeHtml(sub) + '</div></div>';
+  }
+
+  function loadDashboardTab() {
+    $('#tabContent').innerHTML = '<div class="msg-empty">Loading dashboard…</div>';
+    Promise.all([
+      DB.listMessages().catch(function () { return []; }),
+      DB.listMedia().catch(function () { return []; })
+    ]).then(function (results) {
+      if (state.activeTab !== '__dashboard') return;
+      var messages = results[0];
+      var media = results[1];
+      var lastSaved = (state.content.meta && state.content.meta.lastSavedAt) ? formatDate(state.content.meta.lastSavedAt) : 'Not recorded yet';
+      var recent = messages.slice(0, 3);
+
+      var statusHtml = '<div class="banner info">Website status: <b>Live</b> at teyacinvestments.co.zw. Everything you save in this dashboard goes live automatically — there\'s no separate publish step yet.</div>';
+
+      var statsHtml = '<div class="dash-grid">' +
+        statCard('Website pages', '5', 'Home, About, Services, Projects, Contact') +
+        statCard('Enquiries received', String(messages.length), messages.length ? 'See them under Messages' : 'None yet') +
+        statCard('Media files', String(media.length), 'Photos & documents stored') +
+        statCard('Last saved', lastSaved, 'Most recent content change') +
+        '</div>';
+
+      var recentHtml = '<div class="group"><div class="group-head"><h3>Recent enquiries</h3></div><div class="group-body">' +
+        (recent.length
+          ? recent.map(function (m) {
+              var preview = (m.message || '').slice(0, 100) + ((m.message || '').length > 100 ? '…' : '');
+              return '<div class="detail" style="margin-bottom:10px;"><b>' + escapeHtml(m.name || '(no name given)') + '</b> — ' +
+                escapeHtml(formatDate(m.created_at)) + '<br>' + escapeHtml(preview) + '</div>';
+            }).join('')
+          : '<div class="msg-empty" style="padding:10px 0;">No enquiries yet. When someone fills in the contact form on your website, it will show up here.</div>') +
+        '</div></div>';
+
+      var actionsHtml = '<div class="group"><div class="group-head"><h3>Quick actions</h3></div><div class="group-body">' +
+        '<div style="display:flex; gap:10px; flex-wrap:wrap;">' +
+          '<button type="button" class="btn btn-ghost btn-sm" data-goto="global">Edit company details</button>' +
+          '<button type="button" class="btn btn-ghost btn-sm" data-goto="__media">Open media library</button>' +
+          '<button type="button" class="btn btn-ghost btn-sm" data-goto="__messages">View enquiries</button>' +
+          '<a class="btn btn-ghost btn-sm" href="index.html" target="_blank" rel="noopener">View live site</a>' +
+        '</div></div></div>';
+
+      $('#tabContent').innerHTML = statusHtml + statsHtml + recentHtml + actionsHtml;
+      $all('[data-goto]', $('#tabContent')).forEach(function (btn) {
+        btn.addEventListener('click', function () { switchTab(btn.getAttribute('data-goto')); });
+      });
+      fadeTabContent();
+    }).catch(function (err) {
+      if (state.activeTab !== '__dashboard') return;
+      $('#tabContent').innerHTML = '<div class="msg-empty">Could not load dashboard: ' + escapeHtml(err.message || 'unknown error') + '</div>';
+    });
+  }
+
+  /* ============================================================
+     Media library tab
+     ============================================================ */
+  function formatBytes(n) {
+    if (n === undefined || n === null) return '';
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function isImageFile(name, mimetype) {
+    if (mimetype && mimetype.indexOf('image/') === 0) return true;
+    return /\.(jpe?g|png|gif|webp|svg|avif)$/i.test(name || '');
+  }
+
+  function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        toast('Link copied — paste it anywhere a photo or file address is needed.', 'ok');
+      }).catch(function () {
+        toast('Could not copy automatically. Link: ' + text, 'err');
+      });
+    } else {
+      toast('Could not copy automatically. Link: ' + text, 'err');
+    }
+  }
+
+  function uploadNewMedia(file) {
+    var filename = uniqueFilename(file.name);
+    toast('Uploading…', '');
+    DB.uploadMedia(file, filename)
+      .then(function () {
+        toast('File uploaded.', 'ok');
+        loadMediaTab();
+      })
+      .catch(function (err) {
+        toast(err.message || 'Could not upload this file.', 'err');
+      });
+  }
+
+  function replaceExistingMedia(name, file) {
+    toast('Replacing…', '');
+    DB.replaceMedia(name, file)
+      .then(function () {
+        toast('File replaced. Anywhere it\'s already used on your site will show the new version automatically.', 'ok');
+        loadMediaTab();
+      })
+      .catch(function (err) {
+        toast(err.message || 'Could not replace this file.', 'err');
+      });
+  }
+
+  function loadMediaTab() {
+    $('#tabContent').innerHTML = '<div class="msg-empty">Loading media library…</div>';
+    DB.listMedia()
+      .then(function (files) {
+        if (state.activeTab !== '__media') return;
+        renderMediaTab(files);
+      })
+      .catch(function (err) {
+        if (state.activeTab !== '__media') return;
+        $('#tabContent').innerHTML = '<div class="msg-empty">Could not load media library: ' + escapeHtml(err.message || 'unknown error') +
+          '<br><br>If this keeps happening, the storage permissions in Supabase may need the extra listing/delete policy from the setup notes.</div>';
+      });
+  }
+
+  function mediaCardHtml(f) {
+    var size = f.metadata ? formatBytes(f.metadata.size) : '';
+    var when = f.created_at ? formatDate(f.created_at) : '';
+    var url = DB.getMediaPublicUrl(f.name);
+    var isImg = isImageFile(f.name, f.metadata && f.metadata.mimetype);
+    return '<div class="media-card">' +
+      (isImg
+        ? '<div class="media-thumb" style="background-image:url(\'' + encodeURI(url).replace(/'/g, '%27') + '\')"></div>'
+        : '<div class="media-thumb media-thumb-doc">FILE</div>') +
+      '<div class="media-meta">' +
+        '<div class="media-name" title="' + escapeAttr(f.name) + '">' + escapeHtml(f.name) + '</div>' +
+        '<div class="media-sub">' + escapeHtml(size) + (when ? ' · ' + escapeHtml(when) : '') + '</div>' +
+      '</div>' +
+      '<div class="media-actions">' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-media-copy="' + escapeAttr(f.name) + '">Copy link</button>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-media-replace="' + escapeAttr(f.name) + '">Replace</button>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-media-delete="' + escapeAttr(f.name) + '">Delete</button>' +
+      '</div>' +
+      '<input type="file" style="display:none" data-media-replace-input="' + escapeAttr(f.name) + '">' +
+      '</div>';
+  }
+
+  function renderMediaTab(files) {
+    var uploadZone =
+      '<div class="group"><div class="group-head"><h3>Upload new file</h3>' +
+      '<p>Photos or documents for use anywhere on your website. After uploading, use "Copy link" to paste the file\'s address into a photo or document field.</p></div>' +
+      '<div class="group-body">' +
+        '<div class="upload-zone" id="mediaDropZone">' +
+          '<input type="file" id="mediaFileInput" style="display:none">' +
+          '<button type="button" class="btn btn-ghost btn-sm" id="mediaChooseBtn">Choose file to upload</button>' +
+          '<div class="hint" style="margin-top:8px;">or drag a file here</div>' +
+        '</div>' +
+      '</div></div>';
+
+    var grid = files.length
+      ? '<div class="media-grid">' + files.map(mediaCardHtml).join('') + '</div>'
+      : '<div class="msg-empty">No files uploaded yet. Files you add to photo fields across the site will also appear here.</div>';
+
+    $('#tabContent').innerHTML = uploadZone +
+      '<div class="group"><div class="group-head"><h3>All files (' + files.length + ')</h3></div><div class="group-body">' + grid + '</div></div>';
+
+    wireMediaEvents();
+    fadeTabContent();
+  }
+
+  function wireMediaEvents() {
+    var root = $('#tabContent');
+
+    $('#mediaChooseBtn') && $('#mediaChooseBtn').addEventListener('click', function () {
+      $('#mediaFileInput').click();
+    });
+    $('#mediaFileInput') && $('#mediaFileInput').addEventListener('change', function () {
+      var file = this.files[0];
+      this.value = '';
+      if (file) uploadNewMedia(file);
+    });
+    var zone = $('#mediaDropZone');
+    if (zone) {
+      ['dragover', 'dragenter'].forEach(function (evt) {
+        zone.addEventListener(evt, function (e) { e.preventDefault(); zone.classList.add('drag-over'); });
+      });
+      ['dragleave', 'drop'].forEach(function (evt) {
+        zone.addEventListener(evt, function (e) { e.preventDefault(); zone.classList.remove('drag-over'); });
+      });
+      zone.addEventListener('drop', function (e) {
+        var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (file) uploadNewMedia(file);
+      });
+    }
+
+    $all('[data-media-copy]', root).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        copyToClipboard(DB.getMediaPublicUrl(btn.getAttribute('data-media-copy')));
+      });
+    });
+
+    $all('[data-media-replace]', root).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var name = btn.getAttribute('data-media-replace');
+        root.querySelector('[data-media-replace-input="' + cssEscape(name) + '"]').click();
+      });
+    });
+    $all('[data-media-replace-input]', root).forEach(function (input) {
+      input.addEventListener('change', function () {
+        var file = this.files[0];
+        var name = input.getAttribute('data-media-replace-input');
+        this.value = '';
+        if (file) replaceExistingMedia(name, file);
+      });
+    });
+
+    $all('[data-media-delete]', root).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var name = btn.getAttribute('data-media-delete');
+        if (!confirm('Delete "' + name + '"? If this file is used as a photo anywhere on your site, that photo will stop showing until replaced. This cannot be undone.')) return;
+        btn.disabled = true;
+        btn.textContent = 'Deleting…';
+        DB.deleteMedia(name)
+          .then(function () {
+            toast('File deleted.', 'ok');
+            loadMediaTab();
+          })
+          .catch(function (err) {
+            toast(err.message || 'Could not delete this file.', 'err');
+            btn.disabled = false;
+            btn.textContent = 'Delete';
+          });
+      });
+    });
+  }
+
+  /* ============================================================
      Messages tab (contact-form enquiries saved from the public site)
      ============================================================ */
-  function formatMsgDate(iso) {
+  function formatDate(iso) {
     try {
       var d = new Date(iso);
       return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) +
         ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
     } catch (e) { return iso || ''; }
   }
+  function formatMsgDate(iso) { return formatDate(iso); }
 
   function loadMessagesTab() {
     $('#tabContent').innerHTML = '<div class="msg-empty">Loading messages…</div>';
@@ -1115,6 +1405,8 @@
 
     chain
       .then(function () {
+        state.content.meta = state.content.meta || {};
+        state.content.meta.lastSavedAt = new Date().toISOString();
         return DB.saveContent(state.content);
       })
       .then(function () {
