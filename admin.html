@@ -205,43 +205,25 @@
       <div class="word">TEYAC <span>WEBSITE ADMIN</span></div>
     </div>
     <h1>Sign in to edit your website</h1>
-    <p class="sub">Update text, photos and project details on teyacinvestments.co.zw without touching any code. Changes go live within about a minute of saving.</p>
+    <p class="sub">Update text, photos and project details on teyacinvestments.co.zw without touching any code. Changes go live within a few seconds of saving.</p>
 
     <div id="loginError" class="error-box"></div>
 
     <form id="loginForm">
       <div class="field">
-        <label for="fRepo">GitHub repository</label>
-        <input type="text" id="fRepo" placeholder="your-username/teyacinvestments" autocomplete="off">
-        <div class="hint">The repository that holds the website files, as <code>username/repository-name</code>.</div>
+        <label for="fEmail">Email</label>
+        <input type="text" id="fEmail" placeholder="you@example.com" autocomplete="username">
       </div>
       <div class="field">
-        <label for="fBranch">Branch</label>
-        <input type="text" id="fBranch" value="main" autocomplete="off">
+        <label for="fPassword">Password</label>
+        <input type="password" id="fPassword" placeholder="Your password" autocomplete="current-password">
       </div>
-      <div class="field">
-        <label for="fToken">Access token</label>
-        <input type="password" id="fToken" placeholder="github_pat_..." autocomplete="off">
-        <div class="hint">This is like your admin password. See "How do I get an access token?" below if you don't have one yet.</div>
-      </div>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:18px;">
-        <input type="checkbox" id="fRemember" checked style="width:16px;height:16px;">
-        Remember me on this computer
-      </label>
       <button type="submit" class="btn btn-primary" id="loginBtn">Sign in</button>
     </form>
 
-    <details class="login-help">
-      <summary>How do I get an access token?</summary>
-      <ol>
-        <li>Go to <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a> and sign in to your GitHub account.</li>
-        <li>Give it a name like <code>TEYAC Website Admin</code>.</li>
-        <li>Under "Repository access", choose <strong>Only select repositories</strong> and pick your website repository.</li>
-        <li>Under "Permissions" → "Repository permissions", set <strong>Contents</strong> to <strong>Read and write</strong>.</li>
-        <li>Click <strong>Generate token</strong> at the bottom, then copy the long code it shows you (starting with <code>github_pat_</code>).</li>
-        <li>Paste that code into the "Access token" box above. Keep it somewhere safe — GitHub only shows it to you once.</li>
-      </ol>
-    </details>
+    <p style="font-size:12.5px; color:var(--muted); margin-top:18px; line-height:1.6;">
+      Your account is set up once by whoever manages the site. If you've forgotten your password or need an account created, ask them to reset it from the Supabase project dashboard.
+    </p>
   </div>
 </div>
 
@@ -274,6 +256,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
 <script src="admin.js"></script>
 </body>
 </html>

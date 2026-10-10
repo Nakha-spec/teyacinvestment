@@ -39,18 +39,6 @@
     return base + '-' + suffix + '.' + ext;
   }
 
-  function utf8ToBase64(str) {
-    var bytes = new TextEncoder().encode(str);
-    var binary = '';
-    for (var i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-    return btoa(binary);
-  }
-  function base64ToUtf8(b64) {
-    var binary = atob(b64.replace(/\n/g, ''));
-    var bytes = new Uint8Array(binary.length);
-    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return new TextDecoder().decode(bytes);
-  }
   function fileToDataUrl(file) {
     return new Promise(function (resolve, reject) {
       var r = new FileReader();
@@ -61,65 +49,68 @@
   }
 
   /* ============================================================
-     GitHub Contents API wrapper
+     Supabase config + wrapper
      ============================================================ */
-  var GH = {
-    cfg: null, // {owner, repo, branch, token}
-    headers: function () {
-      return {
-        'Authorization': 'Bearer ' + this.cfg.token,
-        'Accept': 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28'
-      };
-    },
-    apiBase: function () {
-      return 'https://api.github.com/repos/' + this.cfg.owner + '/' + this.cfg.repo;
-    },
-    // Verify repo + token are valid and writable
-    checkAccess: function () {
-      var self = this;
-      return fetch(this.apiBase() + '?_=' + Date.now(), { headers: this.headers(), cache: 'no-store' }).then(function (res) {
-        if (res.status === 404) throw new Error('Repository not found. Check the "owner/repository" spelling and make sure the token has access to it.');
-        if (res.status === 401) throw new Error('That access token was not accepted. Double-check you copied the whole token.');
-        if (!res.ok) throw new Error('GitHub returned an error (status ' + res.status + '). Please try again.');
-        return res.json();
-      }).then(function (repoInfo) {
-        if (repoInfo.permissions && repoInfo.permissions.push === false) {
-          throw new Error('This token can read the repository but not write to it. When creating the token, set "Contents" permission to "Read and write".');
+  // Filled in once the project exists — see setup instructions.
+  var SUPABASE_URL = 'https://fgtldowsdgbatyuhtubw.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_kiVjEhy475NGnw2wkae2qA_IUmBCGSb';
+  var STORAGE_BUCKET = 'site-images';
+
+  var sbClient = null;
+  function getClient() {
+    if (!sbClient) {
+      if (typeof supabase === 'undefined' || !supabase.createClient) {
+        throw new Error('Could not load the Supabase library. Check your internet connection and reload the page.');
+      }
+      sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+    return sbClient;
+  }
+
+  var DB = {
+    // Sign in; throws a friendly error on failure.
+    signIn: function (email, password) {
+      return getClient().auth.signInWithPassword({ email: email, password: password }).then(function (res) {
+        if (res.error) {
+          var msg = res.error.message || '';
+          if (/invalid login credentials/i.test(msg)) {
+            throw new Error('That email or password was not accepted. Double-check both and try again.');
+          }
+          throw new Error('Could not sign in: ' + msg);
         }
-        return repoInfo;
+        return res.data;
       });
     },
-    getFile: function (path) {
-      var self = this;
-      var url = this.apiBase() + '/contents/' + path + '?ref=' + encodeURIComponent(this.cfg.branch) + '&_=' + Date.now();
-      return fetch(url, { headers: this.headers(), cache: 'no-store' })
+    // Resolve with the current session, or null if not signed in.
+    getSession: function () {
+      return getClient().auth.getSession().then(function (res) { return res.data.session || null; });
+    },
+    signOut: function () {
+      return getClient().auth.signOut();
+    },
+    // Read the single content row.
+    getContent: function () {
+      return getClient().from('site_content').select('data').eq('id', 1).single().then(function (res) {
+        if (res.error) throw new Error('Could not load site content: ' + res.error.message);
+        return res.data.data;
+      });
+    },
+    // Overwrite the single content row.
+    saveContent: function (data) {
+      return getClient().from('site_content')
+        .update({ data: data, updated_at: new Date().toISOString() })
+        .eq('id', 1)
         .then(function (res) {
-          if (res.status === 404) throw new Error('Could not find "' + path + '" in the repository.');
-          if (!res.ok) return res.text().then(function (t) { throw new Error('GitHub error reading ' + path + ': ' + res.status + ' ' + t); });
-          return res.json();
-        })
-        .then(function (data) {
-          return { sha: data.sha, content: base64ToUtf8(data.content) };
+          if (res.error) throw new Error('Could not save: ' + res.error.message);
         });
     },
-    putFile: function (path, contentStr, sha, message, isBase64) {
-      var self = this;
-      var body = {
-        message: message,
-        content: isBase64 ? contentStr : utf8ToBase64(contentStr),
-        branch: this.cfg.branch
-      };
-      if (sha) body.sha = sha;
-      return fetch(this.apiBase() + '/contents/' + path, {
-        method: 'PUT',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, this.headers()),
-        body: JSON.stringify(body)
-      }).then(function (res) {
-        if (!res.ok) return res.json().catch(function () { return {}; }).then(function (j) {
-          throw new Error('Could not save ' + path + ': ' + (j.message || res.status));
-        });
-        return res.json();
+    // Upload a File/Blob and resolve with its public URL.
+    uploadImage: function (file, filename) {
+      var path = 'uploads/' + filename;
+      return getClient().storage.from(STORAGE_BUCKET).upload(path, file, { upsert: false }).then(function (res) {
+        if (res.error) throw new Error('Could not upload photo: ' + res.error.message);
+        var pub = getClient().storage.from(STORAGE_BUCKET).getPublicUrl(path);
+        return pub.data.publicUrl;
       });
     }
   };
@@ -420,8 +411,7 @@
      ============================================================ */
   var state = {
     content: null,
-    contentSha: null,
-    pendingUploads: {}, // path -> {filename, dataUrl, base64}
+    pendingUploads: {}, // path -> {filename, dataUrl, file}
     dirty: false,
     activeTab: 'global',
     saving: false
@@ -429,26 +419,13 @@
 
   var LS_KEY = 'teyac_admin_config_v1';
 
-  function loadSavedConfig() {
-    try {
-      var raw = localStorage.getItem(LS_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) { return null; }
-  }
-  function saveConfig(cfg, remember) {
-    try {
-      if (remember) localStorage.setItem(LS_KEY, JSON.stringify(cfg));
-      else sessionStorage.setItem(LS_KEY, JSON.stringify(cfg));
-    } catch (e) {}
-  }
-  function clearSavedConfig() {
-    try { localStorage.removeItem(LS_KEY); sessionStorage.removeItem(LS_KEY); } catch (e) {}
-  }
-  function loadAnyConfig() {
-    try {
-      var raw = localStorage.getItem(LS_KEY) || sessionStorage.getItem(LS_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) { return null; }
+  // Supabase's own client already persists the signed-in session in
+  // localStorage, so there's no separate credential store to manage here.
+  var rememberedEmail = (function () {
+    try { return localStorage.getItem(LS_KEY + '_email') || ''; } catch (e) { return ''; }
+  })();
+  function rememberEmail(email) {
+    try { localStorage.setItem(LS_KEY + '_email', email); } catch (e) {}
   }
 
   /* ============================================================
@@ -482,21 +459,22 @@
   }
   function hideError() { $('#loginError').style.display = 'none'; }
 
-  function attemptLogin(owner, repo, branch, token, remember) {
-    GH.cfg = { owner: owner, repo: repo, branch: branch || 'main', token: token };
+  function loadAfterAuth(email) {
+    return DB.getContent().then(function (data) {
+      state.content = data;
+      if (email) rememberEmail(email);
+      enterDashboard(email);
+    });
+  }
+
+  function attemptLogin(email, password) {
     var btn = $('#loginBtn');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Signing in…';
     hideError();
 
-    return GH.checkAccess()
-      .then(function () { return GH.getFile('content.json'); })
-      .then(function (res) {
-        state.content = JSON.parse(res.content);
-        state.contentSha = res.sha;
-        saveConfig(GH.cfg, remember);
-        enterDashboard();
-      })
+    return DB.signIn(email, password)
+      .then(function () { return loadAfterAuth(email); })
       .catch(function (err) {
         showError(err.message || 'Something went wrong signing in. Please check your details and try again.');
       })
@@ -507,32 +485,37 @@
   }
 
   function wireLogin() {
-    var saved = loadAnyConfig();
-    if (saved) {
-      $('#fRepo').value = saved.owner + '/' + saved.repo;
-      $('#fBranch').value = saved.branch || 'main';
-    }
+    if (rememberedEmail) $('#fEmail').value = rememberedEmail;
+
     $('#loginForm').addEventListener('submit', function (e) {
       e.preventDefault();
-      var repoVal = $('#fRepo').value.trim();
-      var parts = repoVal.split('/').map(function (s) { return s.trim(); }).filter(Boolean);
-      if (parts.length !== 2) { showError('Enter the repository as username/repository-name.'); return; }
-      var token = $('#fToken').value.trim();
-      if (!token) { showError('Enter your access token.'); return; }
-      attemptLogin(parts[0], parts[1], $('#fBranch').value.trim() || 'main', token, $('#fRemember').checked);
+      var email = $('#fEmail').value.trim();
+      var password = $('#fPassword').value;
+      if (!email) { showError('Enter your email address.'); return; }
+      if (!password) { showError('Enter your password.'); return; }
+      attemptLogin(email, password);
     });
 
-    // auto sign-in if we have a remembered token
-    if (saved && saved.token) {
-      $('#fToken').value = saved.token;
-      attemptLogin(saved.owner, saved.repo, saved.branch, saved.token, true);
-    }
+    // Already signed in from a previous visit? Supabase keeps the session
+    // in localStorage itself, so just check and skip straight to the dashboard.
+    DB.getSession().then(function (session) {
+      if (session && session.user) {
+        var btn = $('#loginBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Signing in…';
+        loadAfterAuth(session.user.email).catch(function (err) {
+          btn.disabled = false;
+          btn.textContent = 'Sign in';
+          showError(err.message || 'Could not resume your session. Please sign in again.');
+        });
+      }
+    }).catch(function () { /* not signed in yet — show the form as normal */ });
   }
 
-  function enterDashboard() {
+  function enterDashboard(email) {
     $('#loginScreen').style.display = 'none';
     $('#dashboard').className = 'active';
-    $('#repoLabel').textContent = GH.cfg.owner + '/' + GH.cfg.repo + ' (' + GH.cfg.branch + ')';
+    $('#repoLabel').textContent = email || '';
     renderSidebar();
     switchTab(state.activeTab);
     window.addEventListener('beforeunload', function (e) {
@@ -542,8 +525,7 @@
 
   $('#logoutBtn') && $('#logoutBtn').addEventListener('click', function () {
     if (state.dirty && !confirm('You have unsaved changes. Sign out anyway?')) return;
-    clearSavedConfig();
-    location.reload();
+    DB.signOut().finally(function () { location.reload(); });
   });
 
   /* ============================================================
@@ -792,10 +774,11 @@
         if (!file) return;
         var path = input.getAttribute('data-img-upload');
         fileToDataUrl(file).then(function (dataUrl) {
-          var base64 = dataUrl.split(',')[1];
           var filename = uniqueFilename(file.name);
-          state.pendingUploads[path] = { filename: filename, dataUrl: dataUrl, base64: base64, mime: file.type };
-          setPath(state.content, path, 'images/' + filename);
+          state.pendingUploads[path] = { filename: filename, dataUrl: dataUrl, file: file };
+          // The public URL is predictable ahead of the actual upload (which happens on Save),
+          // so the field can show its final value right away.
+          setPath(state.content, path, SUPABASE_URL + '/storage/v1/object/public/' + STORAGE_BUCKET + '/uploads/' + filename);
           markDirty();
           renderTabContent(SCHEMA.filter(function (t) { return t.id === state.activeTab; })[0]);
         });
@@ -897,25 +880,19 @@
     uploadPaths.forEach(function (path) {
       chain = chain.then(function () {
         var up = state.pendingUploads[path];
-        return GH.putFile('images/' + up.filename, up.base64, null, 'Admin: upload ' + up.filename, true);
+        return DB.uploadImage(up.file, up.filename);
       });
     });
 
     chain
       .then(function () {
-        // refetch sha right before writing to minimize conflict window
-        return GH.getFile('content.json');
+        return DB.saveContent(state.content);
       })
-      .then(function (fresh) {
-        var jsonStr = JSON.stringify(state.content, null, 2);
-        return GH.putFile('content.json', jsonStr, fresh.sha, 'Admin: update site content');
-      })
-      .then(function (res) {
-        state.contentSha = res.content.sha;
+      .then(function () {
         state.pendingUploads = {};
         state.dirty = false;
         setStatus('All changes saved', 'saved');
-        toast('Saved! Your website will update within about a minute.', 'ok');
+        toast('Saved! Your website will update within a few seconds.', 'ok');
       })
       .catch(function (err) {
         setStatus('Save failed', 'error');

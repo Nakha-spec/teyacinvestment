@@ -1,4 +1,8 @@
 (function () {
+  // ---- Supabase project config ----
+  var SUPABASE_URL = 'https://fgtldowsdgbatyuhtubw.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_kiVjEhy475NGnw2wkae2qA_IUmBCGSb';
+
   function escapeHtml(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -152,11 +156,33 @@
     }
   }
 
+  async function fetchContent() {
+    // Plain REST call to Supabase (no SDK needed for a single public read) —
+    // keeps the public-facing page light. Falls back to a local content.json
+    // if present (e.g. during local testing), then to the page's own baked-in content.
+    if (SUPABASE_URL.indexOf('YOUR-PROJECT') === -1) {
+      var url = SUPABASE_URL + '/rest/v1/site_content?select=data&id=eq.1';
+      var res = await fetch(url, {
+        cache: 'no-store',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+          'Accept': 'application/vnd.pgrst.object+json'
+        }
+      });
+      if (!res.ok) throw new Error('Supabase returned ' + res.status);
+      var row = await res.json();
+      return row.data;
+    }
+    // Fallback path (config not yet wired up): try a local content.json if one exists.
+    var localRes = await fetch('content.json', { cache: 'no-store' });
+    if (!localRes.ok) throw new Error('no content.json fallback available');
+    return await localRes.json();
+  }
+
   async function init() {
     try {
-      var res = await fetch('content.json', { cache: 'no-store' });
-      if (!res.ok) return; // keep baked-in fallback content
-      var data = await res.json();
+      var data = await fetchContent();
       applySimpleBindings(data);
       applyListBindings(data);
       applyLinkRewrites(data);
@@ -166,7 +192,7 @@
       }
       window.__teyacContent = data; // exposed for debugging / admin preview
     } catch (e) {
-      console.warn('content.json failed to load, showing built-in content', e);
+      console.warn('Site content failed to load, showing built-in content', e);
     }
   }
 
