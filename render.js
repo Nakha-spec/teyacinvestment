@@ -80,6 +80,14 @@
     }).join('');
   }
 
+  function renderTestimonials(container, items) {
+    container.innerHTML = items.map(function (it) {
+      return '<article class="testimonial-card"><q>' + escapeHtml(it.quote) + '</q>' +
+        '<div class="who">' + escapeHtml(it.name) + '</div>' +
+        '<div class="role">' + escapeHtml(it.role) + '</div></article>';
+    }).join('');
+  }
+
   function renderGallery(container, categories) {
     container.innerHTML = categories.map(function (cat) {
       var items = (cat.items || []).map(function (item) {
@@ -95,6 +103,7 @@
     'home.trustBand.names': renderSpanList,
     'home.featuredProjects.cards': renderFeaturedGrid,
     'home.whyChoose.items': renderWhyGrid,
+    'home.testimonials.items': renderTestimonials,
     'about.leadership.people': renderLeaderCards,
     'services.lines.0.subservices': renderSubserviceGrid,
     'services.lines.1.subservices': renderSubserviceGrid,
@@ -180,12 +189,22 @@
     return await localRes.json();
   }
 
+  function applyTheme(data) {
+    var theme = data.global && data.global.theme;
+    if (!theme) return;
+    var root = document.documentElement.style;
+    if (theme.buttonColor) root.setProperty('--orange', theme.buttonColor);
+    if (theme.backgroundColor) root.setProperty('--navy', theme.backgroundColor);
+    if (theme.textColor) root.setProperty('--ink', theme.textColor);
+  }
+
   async function init() {
     try {
       var data = await fetchContent();
       applySimpleBindings(data);
       applyListBindings(data);
       applyLinkRewrites(data);
+      applyTheme(data);
       if (data.global && data.global.metaDescription) {
         var md = document.querySelector('meta[name="description"]');
         if (md) md.setAttribute('content', data.global.metaDescription);
@@ -201,4 +220,26 @@
   } else {
     init();
   }
+
+  // Lets the contact-form script (in index.html) save a copy of each enquiry
+  // to Supabase so the owner can see it in admin, in addition to opening
+  // WhatsApp. Exposed on window since this file's own variables are scoped
+  // to this IIFE. Never throws — a failed save should never block the
+  // WhatsApp message from opening.
+  window.__teyacSaveMessage = function (fields) {
+    if (SUPABASE_URL.indexOf('YOUR-PROJECT') !== -1) return Promise.resolve();
+    return fetch(SUPABASE_URL + '/rest/v1/messages', {
+      method: 'POST',
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(fields)
+    }).catch(function (e) {
+      console.warn('Could not save enquiry to admin (WhatsApp message still sent)', e);
+    });
+  };
 })();

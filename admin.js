@@ -99,6 +99,12 @@
     signOut: function () {
       return getClient().auth.signOut();
     },
+    // Change the signed-in owner's password.
+    updatePassword: function (newPassword) {
+      return getClient().auth.updateUser({ password: newPassword }).then(function (res) {
+        if (res.error) throw new Error('Could not change password: ' + res.error.message);
+      });
+    },
     // Read the single content row.
     getContent: function () {
       return getClient().from('site_content').select('data').eq('id', 1).single().then(function (res) {
@@ -121,6 +127,19 @@
             throw new Error('Save did not apply — no matching content row was found. Check that the setup SQL ran successfully and that you are signed in correctly.');
           }
         });
+    },
+    // Read all saved contact-form enquiries, newest first.
+    listMessages: function () {
+      return getClient().from('messages').select('*').order('created_at', { ascending: false }).then(function (res) {
+        if (res.error) throw new Error('Could not load messages: ' + res.error.message);
+        return res.data || [];
+      });
+    },
+    // Delete one enquiry (after following up on it, for example).
+    deleteMessage: function (id) {
+      return getClient().from('messages').delete().eq('id', id).then(function (res) {
+        if (res.error) throw new Error('Could not delete message: ' + res.error.message);
+      });
     },
     // Upload a File/Blob and resolve with its public URL.
     uploadImage: function (file, filename) {
@@ -162,6 +181,11 @@
         { t: 'text', path: 'global.metaTitle', label: 'Page title' },
         { t: 'textarea', path: 'global.metaDescription', label: 'Description', rows: 2 },
         { t: 'textarea', path: 'global.metaKeywords', label: 'Keywords (comma separated)', rows: 2 }
+      ]},
+      { title: 'Appearance', hint: 'Changes the colors used across the whole website. Changes go live within a few seconds of saving, same as any other edit.', fields: [
+        { t: 'color', path: 'global.theme.buttonColor', label: 'Button / accent color', default: '#f28b32', hint: 'Used for buttons, highlights and call-to-action links.' },
+        { t: 'color', path: 'global.theme.backgroundColor', label: 'Dark background color', default: '#102a45', hint: 'Used for the header, footer and dark section backgrounds.' },
+        { t: 'color', path: 'global.theme.textColor', label: 'Body text color', default: '#091827', hint: 'The main reading-text color used across the site. Keep this dark for readability.' }
       ]}
     ]},
 
@@ -217,6 +241,18 @@
             { key: 'number', label: 'Number', t: 'text' },
             { key: 'title', label: 'Title', t: 'text' },
             { key: 'text', label: 'Description', t: 'textarea', rows: 2 }
+          ] }
+      ]},
+      { title: 'Testimonials', hint: 'Shows a row of client quotes on the homepage. Only add real quotes from real clients.', fields: [
+        { t: 'text', path: 'home.testimonials.kicker', label: 'Small label' },
+        { t: 'text', path: 'home.testimonials.heading', label: 'Heading' },
+        { t: 'listobjects', path: 'home.testimonials.items', label: 'Quotes', itemNoun: 'quote',
+          itemTitle: function (it) { return it.name || 'New quote'; },
+          defaultItem: function () { return { quote: '', name: '', role: '' }; },
+          fields: [
+            { key: 'quote', label: 'Quote', t: 'textarea', rows: 3 },
+            { key: 'name', label: 'Client name', t: 'text' },
+            { key: 'role', label: 'Company / project', t: 'text' }
           ] }
       ]},
       { title: 'Call-to-action panel', fields: [
@@ -432,7 +468,8 @@
     pendingUploads: {}, // path -> {filename, dataUrl, file}
     dirty: false,
     activeTab: 'global',
-    saving: false
+    saving: false,
+    email: ''
   };
 
   var LS_KEY = 'teyac_admin_config_v1';
@@ -531,6 +568,7 @@
   }
 
   function enterDashboard(email) {
+    state.email = email || '';
     $('#loginScreen').style.display = 'none';
     $('#dashboard').className = 'active';
     $('#repoLabel').textContent = email || '';
@@ -547,13 +585,59 @@
   });
 
   /* ============================================================
+     Account & password modal
+     ============================================================ */
+  function openAccountModal() {
+    $('#accountEmail').textContent = state.email || '';
+    $('#newPassword').value = '';
+    $('#confirmPassword').value = '';
+    $('#accountError').style.display = 'none';
+    $('#accountModal').classList.add('show');
+  }
+  function closeAccountModal() {
+    $('#accountModal').classList.remove('show');
+  }
+  function showAccountError(msg) {
+    var box = $('#accountError');
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+
+  $('#accountBtn') && $('#accountBtn').addEventListener('click', openAccountModal);
+  $('#accountCancelBtn') && $('#accountCancelBtn').addEventListener('click', closeAccountModal);
+  $('#accountModal') && $('#accountModal').addEventListener('click', function (e) {
+    if (e.target === $('#accountModal')) closeAccountModal();
+  });
+  $('#accountSaveBtn') && $('#accountSaveBtn').addEventListener('click', function () {
+    var pw = $('#newPassword').value;
+    var confirm2 = $('#confirmPassword').value;
+    if (!pw || pw.length < 6) { showAccountError('Password must be at least 6 characters.'); return; }
+    if (pw !== confirm2) { showAccountError('Those passwords don\'t match. Try again.'); return; }
+    var btn = $('#accountSaveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Saving…';
+    DB.updatePassword(pw)
+      .then(function () {
+        closeAccountModal();
+        toast('Password changed. Use it next time you sign in.', 'ok');
+      })
+      .catch(function (err) {
+        showAccountError(err.message || 'Could not change the password. Please try again.');
+      })
+      .finally(function () {
+        btn.disabled = false;
+        btn.textContent = 'Change password';
+      });
+  });
+
+  /* ============================================================
      Sidebar + tab switching
      ============================================================ */
   function renderSidebar() {
     var ul = $('#tabList');
     ul.innerHTML = SCHEMA.map(function (tab) {
       return '<li><button data-tab="' + tab.id + '">' + escapeHtml(tab.label) + '</button></li>';
-    }).join('');
+    }).join('') + '<li><button data-tab="__messages">Messages</button></li>';
     $all('button[data-tab]', ul).forEach(function (btn) {
       btn.addEventListener('click', function () { switchTab(btn.getAttribute('data-tab')); });
     });
@@ -564,19 +648,97 @@
     $all('#tabList button').forEach(function (b) {
       b.classList.toggle('active', b.getAttribute('data-tab') === id);
     });
+    window.scrollTo(0, 0);
+
+    if (id === '__messages') {
+      $('#tabTitle').textContent = 'Messages';
+      $('#saveBtn').style.display = 'none';
+      $('#statusText').style.display = 'none';
+      loadMessagesTab();
+      return;
+    }
+    $('#saveBtn').style.display = '';
+    $('#statusText').style.display = '';
+
     var tab = SCHEMA.filter(function (t) { return t.id === id; })[0];
     $('#tabTitle').textContent = tab.label;
     renderTabContent(tab);
-    window.scrollTo(0, 0);
+  }
+
+  /* ============================================================
+     Messages tab (contact-form enquiries saved from the public site)
+     ============================================================ */
+  function formatMsgDate(iso) {
+    try {
+      var d = new Date(iso);
+      return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) +
+        ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return iso || ''; }
+  }
+
+  function loadMessagesTab() {
+    $('#tabContent').innerHTML = '<div class="msg-empty">Loading messages…</div>';
+    DB.listMessages()
+      .then(function (rows) {
+        if (state.activeTab !== '__messages') return; // user navigated away while loading
+        if (!rows.length) {
+          $('#tabContent').innerHTML = '<div class="msg-empty">No enquiries yet. When someone fills in the contact form on your website, it will show up here.</div>';
+          return;
+        }
+        $('#tabContent').innerHTML = rows.map(function (m) {
+          return '<div class="msg-card" data-msg-id="' + escapeAttr(m.id) + '">' +
+            '<div class="msg-card-head"><span class="who">' + escapeHtml(m.name || '(no name given)') + '</span>' +
+            '<span class="when">' + escapeHtml(formatMsgDate(m.created_at)) + '</span></div>' +
+            '<div class="detail"><b>Phone:</b> ' + escapeHtml(m.phone || '—') + '</div>' +
+            '<div class="detail"><b>Project type:</b> ' + escapeHtml(m.service || '—') + '</div>' +
+            '<div class="detail"><b>Message:</b> ' + escapeHtml(m.message || '—') + '</div>' +
+            '<div style="margin-top:10px;"><button type="button" class="btn btn-ghost btn-sm" data-delete-msg="' + escapeAttr(m.id) + '">Delete</button></div>' +
+            '</div>';
+        }).join('');
+        $all('[data-delete-msg]', $('#tabContent')).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            if (!confirm('Delete this message? This cannot be undone.')) return;
+            var id = btn.getAttribute('data-delete-msg');
+            btn.disabled = true;
+            btn.textContent = 'Deleting…';
+            DB.deleteMessage(id)
+              .then(function () {
+                var card = btn.closest('.msg-card');
+                if (card) card.remove();
+                if (!$('#tabContent').querySelector('.msg-card')) {
+                  $('#tabContent').innerHTML = '<div class="msg-empty">No enquiries yet. When someone fills in the contact form on your website, it will show up here.</div>';
+                }
+              })
+              .catch(function (err) {
+                toast(err.message || 'Could not delete this message.', 'err');
+                btn.disabled = false;
+                btn.textContent = 'Delete';
+              });
+          });
+        });
+        fadeTabContent();
+      })
+      .catch(function (err) {
+        if (state.activeTab !== '__messages') return;
+        $('#tabContent').innerHTML = '<div class="msg-empty">Could not load messages: ' + escapeHtml(err.message || 'unknown error') + '</div>';
+      });
   }
 
   /* ============================================================
      Field renderers
      ============================================================ */
+  function fadeTabContent() {
+    var el = $('#tabContent');
+    el.classList.remove('fade-in');
+    void el.offsetWidth; // force reflow so the animation replays
+    el.classList.add('fade-in');
+  }
+
   function renderTabContent(tab) {
     var html = tab.groups.map(renderGroup).join('');
     $('#tabContent').innerHTML = html;
     wireGroupEvents($('#tabContent'));
+    fadeTabContent();
   }
 
   function renderGroup(group) {
@@ -597,6 +759,7 @@
       case 'listobjects': return renderListObjects(field, getPath(state.content, field.path) || []);
       case 'fixedlist': return renderFixedList(field, getPath(state.content, field.path) || []);
       case 'gallery': return renderGallery(field, getPath(state.content, field.path) || []);
+      case 'color': return renderColor(field);
       default: return '';
     }
   }
@@ -619,6 +782,16 @@
     return '<select data-path="' + escapeAttr(path) + '">' + field.options.map(function (o) {
       return '<option value="' + escapeAttr(o) + '"' + (o === val ? ' selected' : '') + '>' + escapeHtml(o) + '</option>';
     }).join('') + '</select>';
+  }
+
+  function renderColor(field) {
+    var val = getPath(state.content, field.path) || field.default || '#000000';
+    return '<div class="f"><label>' + escapeHtml(field.label) + '</label>' +
+      '<div class="color-field">' +
+        '<input type="color" data-path="' + escapeAttr(field.path) + '" value="' + escapeAttr(val) + '">' +
+        '<span class="color-value">' + escapeHtml(val) + '</span>' +
+      '</div>' +
+      (field.hint ? '<div class="hint">' + escapeHtml(field.hint) + '</div>' : '') + '</div>';
   }
 
   function renderImage(field) {
@@ -776,6 +949,14 @@
       el.addEventListener(evt, function () {
         setPath(state.content, el.getAttribute('data-path'), el.value);
         markDirty();
+      });
+    });
+
+    // color pickers: keep the hex-value label in sync as the user drags the picker
+    $all('input[type="color"][data-path]', root).forEach(function (el) {
+      el.addEventListener('input', function () {
+        var span = el.parentElement.querySelector('.color-value');
+        if (span) span.textContent = el.value;
       });
     });
 

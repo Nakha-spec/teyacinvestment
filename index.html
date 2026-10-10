@@ -71,6 +71,7 @@ footer{padding:60px 0 0;background:#06111d;color:#9eb0bf}.footer-top{display:gri
 @media(max-width:950px){.footer-top{grid-template-columns:1fr 1fr;gap:30px 24px}}
 @media(max-width:650px){.footer-top{grid-template-columns:1fr;gap:28px}.footer-bottom{flex-direction:column}}
 @media(max-width:460px){h1,.page-hero h1{font-size:clamp(2.2rem,10vw,4.25rem)}}
+.testimonial-section{background:var(--mist)}.testimonial-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}.testimonial-card{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:28px 26px;box-shadow:var(--shadow)}.testimonial-card q{display:block;font-family:var(--body);font-size:15px;line-height:1.65;color:var(--ink);margin:0 0 18px;font-style:normal;quotes:none}.testimonial-card .who{font-weight:800;color:var(--navy);font-size:14px}.testimonial-card .role{font-size:12.5px;color:var(--muted);margin-top:2px}@media(max-width:860px){.testimonial-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -149,6 +150,7 @@ footer{padding:60px 0 0;background:#06111d;color:#9eb0bf}.footer-top{display:gri
 </div>
 </div>
 </section>
+<section class="section testimonial-section"><div class="container"><div class="section-title-row"><div><p class="section-kicker" data-bind="home.testimonials.kicker">What clients say</p><h2 data-bind="home.testimonials.heading">In their own words.</h2></div></div><div class="testimonial-grid" data-bind-list="home.testimonials.items"><article class="testimonial-card"><q>Add a real client quote here through the admin dashboard — Home tab → Testimonials.</q><div class="who">Client name</div><div class="role">Company / project</div></article></div></div></section>
 <section class="cta-panel">
 <div class="container cta-grid"><div><p class="section-kicker light" data-bind="home.ctaHome.kicker">Start a conversation</p><h2 data-bind="home.ctaHome.heading">Have a project in mind?</h2><p data-bind="home.ctaHome.text">Speak directly with the TEYAC team about your site, scope and quotation.</p><div class="cta-contact-line"><a href="tel:+263772541729">☎ +263 772 541 729</a><a href="mailto:teyacinvestments@gmail.com">@ teyacinvestments@gmail.com</a><span>936 Checheche Growth Point, Chipinge</span></div></div><div class="button-row"><a class="button button-whatsapp" href="https://wa.me/263772541729?text=Hello%20TEYAC%20Construction%2C%20I%20would%20like%20to%20discuss%20a%20project." rel="noopener" target="_blank"><span class="wa-icon">☎</span> Chat on WhatsApp</a><a class="button button-outline" href="#contact">Contact us →</a></div></div>
 </section>
@@ -238,6 +240,9 @@ footer{padding:60px 0 0;background:#06111d;color:#9eb0bf}.footer-top{display:gri
     const service = document.getElementById('qf-service').value;
     const message = document.getElementById('qf-message').value.trim();
     const text = `Hello TEYAC Construction, my name is ${name} (${phone}). I would like to enquire about ${service}. ${message}`;
+    if (window.__teyacSaveMessage) {
+      window.__teyacSaveMessage({ name, phone, service, message });
+    }
     window.open('https://wa.me/263772541729?text=' + encodeURIComponent(text), '_blank', 'noopener');
   });
 })();</script>
