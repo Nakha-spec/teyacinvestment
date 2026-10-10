@@ -713,17 +713,35 @@
     }).catch(function () { /* not signed in yet — show the form as normal */ });
   }
 
+  var VALID_TAB_IDS = ['__dashboard', '__messages', '__media'].concat(SCHEMA.map(function (t) { return t.id; }));
+  function isValidTabId(id) { return VALID_TAB_IDS.indexOf(id) !== -1; }
+
   function enterDashboard(email) {
     state.email = email || '';
     $('#loginScreen').style.display = 'none';
     $('#dashboard').className = 'active';
     $('#repoLabel').textContent = email || '';
     renderSidebar();
-    switchTab(state.activeTab);
+    // Resume on whatever tab the URL already points to (e.g. a bookmark,
+    // or returning via the back gesture before sign-in was required again)
+    // — otherwise start on the Dashboard tab, same as before.
+    var startHash = (location.hash || '').replace(/^#/, '');
+    switchTab(isValidTabId(startHash) ? startHash : state.activeTab, { replace: true });
     window.addEventListener('beforeunload', function (e) {
       if (state.dirty) { e.preventDefault(); e.returnValue = ''; }
     });
   }
+
+  // The phone's back gesture (or a desktop Back button/Alt+Left) fires this.
+  // Step back to whichever tab the browser says was showing before, instead
+  // of leaving the dashboard — a far more forgiving undo for someone who
+  // wasn't trying to leave at all, just trying to go back one screen.
+  window.addEventListener('popstate', function (e) {
+    if (!$('#dashboard').classList.contains('active')) return;
+    var tab = (e.state && e.state.tab) || '__dashboard';
+    if (!isValidTabId(tab)) tab = '__dashboard';
+    switchTab(tab, { fromPopState: true });
+  });
 
   $('#logoutBtn') && $('#logoutBtn').addEventListener('click', function () {
     if (state.dirty && !confirm('You have unsaved changes. Sign out anyway?')) return;
@@ -779,14 +797,23 @@
   /* ============================================================
      Sidebar + tab switching
      ============================================================ */
+  // A small icon next to each label, so each section is recognizable at a
+  // glance — not just a block of similar-looking text to read every time.
+  var TAB_ICONS = {
+    __dashboard: '\u{1F3E0}', global: '\u{2139}️', home: '\u{1F3E1}', about: '\u{1F465}',
+    services: '\u{1F6E0}️', projects: '\u{1F3D7}️', contact: '\u{1F4DE}',
+    announcements: '\u{1F4E3}', footer: '\u{1F4C4}', pricing: '\u{1F4B0}',
+    __messages: '\u{2709}️', __media: '\u{1F5BC}️'
+  };
+  function tabButtonHtml(id, label) {
+    return '<li><button data-tab="' + id + '"><span class="tab-ic" aria-hidden="true">' + (TAB_ICONS[id] || '') + '</span>' + escapeHtml(label) + '</button></li>';
+  }
   function renderSidebar() {
     var ul = $('#tabList');
-    ul.innerHTML = '<li><button data-tab="__dashboard">Dashboard</button></li>' +
-      SCHEMA.map(function (tab) {
-        return '<li><button data-tab="' + tab.id + '">' + escapeHtml(tab.label) + '</button></li>';
-      }).join('') +
-      '<li><button data-tab="__messages">Messages</button></li>' +
-      '<li><button data-tab="__media">Media Library</button></li>';
+    ul.innerHTML = tabButtonHtml('__dashboard', 'Dashboard') +
+      SCHEMA.map(function (tab) { return tabButtonHtml(tab.id, tab.label); }).join('') +
+      tabButtonHtml('__messages', 'Messages') +
+      tabButtonHtml('__media', 'Media Library');
     $all('button[data-tab]', ul).forEach(function (btn) {
       btn.addEventListener('click', function () { switchTab(btn.getAttribute('data-tab')); });
     });
@@ -826,8 +853,24 @@
     if (el) el.innerHTML = list.map(function (t) { return '<li>' + escapeHtml(t) + '</li>'; }).join('');
   }
 
-  function switchTab(id) {
+  // Tab switches push real browser history entries (one per section visited)
+  // so the phone's back gesture / back button steps back through the
+  // dashboard's own tabs first, instead of leaving the whole page straight
+  // away. `opts.fromPopState` is set when we're responding to that back
+  // gesture itself, so we don't push a *new* entry for it; `opts.replace`
+  // is used for the very first tab shown after signing in, so there isn't
+  // a spare history entry sitting between "signed in" and the first tab.
+  function switchTab(id, opts) {
+    opts = opts || {};
+    var prevTab = state.activeTab;
     state.activeTab = id;
+    if (!opts.fromPopState) {
+      if (opts.replace || !history.state) {
+        history.replaceState({ tab: id }, '', '#' + id);
+      } else if (id !== prevTab) {
+        history.pushState({ tab: id }, '', '#' + id);
+      }
+    }
     $all('#tabList button').forEach(function (b) {
       b.classList.toggle('active', b.getAttribute('data-tab') === id);
     });
@@ -862,6 +905,16 @@
       '<div class="stat-sub">' + escapeHtml(sub) + '</div></div>';
   }
 
+  // Mirrors the same show/hide rule render.js uses on the live site, so the
+  // dashboard's "live right now" count always matches what visitors see.
+  function isAnnouncementLiveNow(a) {
+    if (!a || a.enabled === false) return false;
+    var today = new Date().toISOString().slice(0, 10);
+    if (a.startDate && a.startDate > today) return false;
+    if (a.endDate && a.endDate < today) return false;
+    return true;
+  }
+
   function loadDashboardTab() {
     $('#tabContent').innerHTML = '<div class="msg-empty">Loading dashboard…</div>';
     Promise.all([
@@ -871,6 +924,8 @@
       if (state.activeTab !== '__dashboard') return;
       var messages = results[0];
       var media = results[1];
+      var announcements = (state.content.announcements && state.content.announcements.items) || [];
+      var liveAnnouncements = announcements.filter(isAnnouncementLiveNow);
       var lastSaved = (state.content.meta && state.content.meta.lastSavedAt) ? formatDate(state.content.meta.lastSavedAt) : 'Not recorded yet';
       var recent = messages.slice(0, 3);
 
@@ -880,8 +935,26 @@
         statCard('Website pages', '5', 'Home, About, Services, Projects, Contact') +
         statCard('Enquiries received', String(messages.length), messages.length ? 'See them under Messages' : 'None yet') +
         statCard('Media files', String(media.length), 'Photos & documents stored') +
+        statCard('Announcements live now', String(liveAnnouncements.length), announcements.length ? (announcements.length - liveAnnouncements.length) + ' not showing right now' : 'None set up yet') +
         statCard('Last saved', lastSaved, 'Most recent content change') +
         '</div>';
+
+      // Its own clearly-labeled section — not buried inside a tab you have
+      // to already know exists, and not a pop-up/alert either.
+      var announceHtml = '<div class="group"><div class="group-head"><h3>Announcements</h3>' +
+        '<p>The banner shown at the top of every page on your website.</p></div><div class="group-body">' +
+        (announcements.length
+          ? '<div class="dash-announce-list">' + announcements.slice(0, 4).map(function (a) {
+              var live = isAnnouncementLiveNow(a);
+              return '<div class="dash-announce-row">' +
+                '<span class="pill ' + (live ? 'pill-live' : 'pill-draft') + '">' + (live ? 'Live now' : 'Not showing') + '</span>' +
+                '<span class="dash-announce-title">' + escapeHtml(a.title || '(untitled)') + '</span>' +
+              '</div>';
+            }).join('') + '</div>' +
+            (announcements.length > 4 ? '<div class="hint" style="margin-top:8px;">+ ' + (announcements.length - 4) + ' more — see all in Announcements.</div>' : '')
+          : '<div class="msg-empty" style="padding:10px 0;">No announcements yet. Add one to show a banner at the top of your website — for office closures, safety notices, new branch openings and similar.</div>') +
+        '<div style="margin-top:14px;"><button type="button" class="btn btn-primary btn-sm" data-goto="announcements">Manage announcements</button></div>' +
+        '</div></div>';
 
       var recentHtml = '<div class="group"><div class="group-head"><h3>Recent enquiries</h3></div><div class="group-body">' +
         (recent.length
@@ -901,7 +974,7 @@
           '<a class="btn btn-ghost btn-sm" href="index.html" target="_blank" rel="noopener">View live site</a>' +
         '</div></div></div>';
 
-      $('#tabContent').innerHTML = statusHtml + statsHtml + recentHtml + actionsHtml;
+      $('#tabContent').innerHTML = statusHtml + statsHtml + announceHtml + recentHtml + actionsHtml;
       $all('[data-goto]', $('#tabContent')).forEach(function (btn) {
         btn.addEventListener('click', function () { switchTab(btn.getAttribute('data-goto')); });
       });
@@ -1247,13 +1320,23 @@
       '</div></div>';
   }
 
+  // Shared move/delete controls, always with a plain-English label next to
+  // the icon \u2014 not just a bare arrow or symbol \u2014 so it's obvious what each
+  // button does without having to guess or hover for a tooltip (which
+  // doesn't work on a phone anyway).
+  function moveRemoveButtons(listId, idx, canMoveUp, canMoveDown, canRemove, noun) {
+    var removeLabel = 'Delete' + (noun ? ' ' + escapeHtml(noun) : '');
+    return '<div class="item-actions">' +
+      (canMoveUp !== undefined ? '<button type="button" class="icon-btn" data-move="-1" data-list="' + listId + '" data-idx="' + idx + '" ' + (canMoveUp ? '' : 'disabled') + ' title="Move up">\u2191 <span>Move up</span></button>' +
+      '<button type="button" class="icon-btn" data-move="1" data-list="' + listId + '" data-idx="' + idx + '" ' + (canMoveDown ? '' : 'disabled') + ' title="Move down">\u2193 <span>Move down</span></button>' : '') +
+      (canRemove ? '<button type="button" class="icon-btn danger" data-remove data-list="' + listId + '" data-idx="' + idx + '" title="' + removeLabel + '">\u2715 <span>' + removeLabel + '</span></button>' : '') +
+    '</div>';
+  }
+
   function itemHeader(noun, idx, title, canMoveUp, canMoveDown, canRemove, listId, badgeHtml) {
     return '<div class="list-item-head"><span class="tag">' + escapeHtml(title) + '</span>' + (badgeHtml || '') +
-      '<div class="item-actions">' +
-        (canMoveUp !== undefined ? '<button type="button" class="icon-btn" data-move="-1" data-list="' + listId + '" data-idx="' + idx + '" ' + (canMoveUp ? '' : 'disabled') + ' title="Move up">\u2191</button>' +
-        '<button type="button" class="icon-btn" data-move="1" data-list="' + listId + '" data-idx="' + idx + '" ' + (canMoveDown ? '' : 'disabled') + ' title="Move down">\u2193</button>' : '') +
-        (canRemove ? '<button type="button" class="icon-btn danger" data-remove data-list="' + listId + '" data-idx="' + idx + '" title="Remove">\u2715</button>' : '') +
-      '</div></div>';
+      moveRemoveButtons(listId, idx, canMoveUp, canMoveDown, canRemove, noun) +
+      '</div>';
   }
 
   function renderSubfield(sub, basePath, idx, item) {
@@ -1317,15 +1400,10 @@
     var arr = getPath(state.content, field.path) || [];
     var listId = field.path;
     var itemsHtml = arr.map(function (val, idx) {
-      return '<div class="list-item" style="padding:9px 12px;">' +
-        '<div style="display:flex; gap:8px; align-items:center;">' +
-          '<input type="text" style="flex:1;" data-path="' + escapeAttr(field.path + '.' + idx) + '" value="' + escapeAttr(val) + '">' +
-          '<div class="item-actions">' +
-            '<button type="button" class="icon-btn" data-move="-1" data-list="' + listId + '" data-idx="' + idx + '" ' + (idx > 0 ? '' : 'disabled') + ' title="Move up">\u2191</button>' +
-            '<button type="button" class="icon-btn" data-move="1" data-list="' + listId + '" data-idx="' + idx + '" ' + (idx < arr.length - 1 ? '' : 'disabled') + ' title="Move down">\u2193</button>' +
-            '<button type="button" class="icon-btn danger" data-remove data-list="' + listId + '" data-idx="' + idx + '" title="Remove">\u2715</button>' +
-          '</div>' +
-        '</div></div>';
+      return '<div class="list-item list-item-string">' +
+        '<input type="text" data-path="' + escapeAttr(field.path + '.' + idx) + '" value="' + escapeAttr(val) + '">' +
+          moveRemoveButtons(listId, idx, idx > 0, idx < arr.length - 1, true, field.itemNoun) +
+        '</div>';
     }).join('');
     return '<div class="f"><label>' + escapeHtml(field.label) + '</label>' +
       '<div class="list-items" data-list-container="' + listId + '">' + itemsHtml + '</div>' +
@@ -1344,22 +1422,14 @@
           '<button type="button" class="btn btn-ghost btn-sm" style="width:100%; margin-bottom:8px;" data-img-choose="' + escapeAttr(itemPath + '.' + ii + '.image') + '">Change photo</button>' +
           '<div class="f" style="margin-bottom:6px;"><label>Caption</label><input type="text" data-path="' + escapeAttr(itemPath + '.' + ii + '.caption') + '" value="' + escapeAttr(item.caption || '') + '"></div>' +
           '<div class="f" style="margin-bottom:8px;"><label>Description (alt text)</label><input type="text" data-path="' + escapeAttr(itemPath + '.' + ii + '.imageAlt') + '" value="' + escapeAttr(item.imageAlt || '') + '"></div>' +
-          '<div class="item-actions">' +
-            '<button type="button" class="icon-btn" data-move="-1" data-list="' + itemPath + '" data-idx="' + ii + '" ' + (ii > 0 ? '' : 'disabled') + ' title="Move up">\u2191</button>' +
-            '<button type="button" class="icon-btn" data-move="1" data-list="' + itemPath + '" data-idx="' + ii + '" ' + (ii < (cat.items || []).length - 1 ? '' : 'disabled') + ' title="Move down">\u2193</button>' +
-            '<button type="button" class="icon-btn danger" data-remove data-list="' + itemPath + '" data-idx="' + ii + '" title="Remove photo">\u2715</button>' +
-          '</div>' +
+          moveRemoveButtons(itemPath, ii, ii > 0, ii < (cat.items || []).length - 1, true, 'photo') +
         '</div>';
       }).join('');
       return '<div class="gallery-cat">' +
         '<div class="gallery-cat-head">' +
           '<div class="f"><label>Category number</label><input type="text" data-path="' + escapeAttr(field.path + '.' + ci + '.number') + '" value="' + escapeAttr(cat.number || '') + '"></div>' +
           '<div class="f"><label>Category title</label><input type="text" data-path="' + escapeAttr(field.path + '.' + ci + '.title') + '" value="' + escapeAttr(cat.title || '') + '"></div>' +
-          '<div class="item-actions">' +
-            '<button type="button" class="icon-btn" data-move="-1" data-list="' + listId + '" data-idx="' + ci + '" ' + (ci > 0 ? '' : 'disabled') + ' title="Move category up">\u2191</button>' +
-            '<button type="button" class="icon-btn" data-move="1" data-list="' + listId + '" data-idx="' + ci + '" ' + (ci < categories.length - 1 ? '' : 'disabled') + ' title="Move category down">\u2193</button>' +
-            '<button type="button" class="icon-btn danger" data-remove data-list="' + listId + '" data-idx="' + ci + '" title="Remove category">\u2715</button>' +
-          '</div>' +
+          moveRemoveButtons(listId, ci, ci > 0, ci < categories.length - 1, true, 'category') +
         '</div>' +
         '<div class="gallery-items">' + itemsHtml + '</div>' +
         '<button type="button" class="add-btn" style="margin-top:10px;" data-add-gallery-item="' + ci + '" data-list="' + listId + '">+ Add photo to this category</button>' +
@@ -1484,17 +1554,22 @@
       });
     });
 
-    // remove item
+    // Remove item. This saves immediately (doesn't wait for a separate
+    // "Save changes" click) so a deleted item can never look removed in the
+    // dashboard while still actually live on the website — a confusing
+    // in-between state for anyone who doesn't know to look for the save
+    // button afterward.
     $all('[data-remove]', root).forEach(function (btn) {
       btn.addEventListener('click', function () {
         if (btn.disabled) return;
         var listPath = btn.getAttribute('data-list');
         var idx = parseInt(btn.getAttribute('data-idx'), 10);
         var arr = getPath(state.content, listPath);
-        if (!arr || !confirm('Remove this item?')) return;
+        if (!arr || !confirm('Delete this for good? It will be removed from your website right away.')) return;
         arr.splice(idx, 1);
         markDirty();
         renderTabContent(SCHEMA.filter(function (t) { return t.id === state.activeTab; })[0]);
+        doSave();
       });
     });
 
