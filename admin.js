@@ -229,7 +229,10 @@
             { key: 'image', label: 'Photo', t: 'image' },
             { key: 'title', label: 'Title', t: 'text' },
             { key: 'text', label: 'Description', t: 'textarea', rows: 2 }
-          ] }
+          ] },
+        { t: 'select', path: 'home.featuredProjects.layout', label: 'Layout style', options: ['grid', 'list'], default: 'grid', hint: '"grid" shows cards side by side; "list" stacks them as wider rows.' },
+        { t: 'select', path: 'home.featuredProjects.columns', label: 'Columns (grid layout only)', options: ['1', '2', '3'], default: '2' },
+        { t: 'color', path: 'home.featuredProjects.sectionBg', label: 'Section background color', default: '#ffffff', resettable: true, hint: 'Leave alone to use the site\'s normal background.' }
       ]},
       { title: 'Why choose TEYAC', fields: [
         { t: 'text', path: 'home.whyChoose.kicker', label: 'Small label' },
@@ -241,7 +244,9 @@
             { key: 'number', label: 'Number', t: 'text' },
             { key: 'title', label: 'Title', t: 'text' },
             { key: 'text', label: 'Description', t: 'textarea', rows: 2 }
-          ] }
+          ] },
+        { t: 'select', path: 'home.whyChoose.columns', label: 'Number of columns', options: ['2', '3', '4'], default: '3' },
+        { t: 'color', path: 'home.whyChoose.sectionBg', label: 'Section background color', default: '#102a45', resettable: true, hint: 'Leave alone to use the site\'s dark background color from Appearance.' }
       ]},
       { title: 'Testimonials', hint: 'Shows a row of client quotes on the homepage. Only add real quotes from real clients.', fields: [
         { t: 'text', path: 'home.testimonials.kicker', label: 'Small label' },
@@ -253,7 +258,8 @@
             { key: 'quote', label: 'Quote', t: 'textarea', rows: 3 },
             { key: 'name', label: 'Client name', t: 'text' },
             { key: 'role', label: 'Company / project', t: 'text' }
-          ] }
+          ] },
+        { t: 'color', path: 'home.testimonials.sectionBg', label: 'Section background color', default: '#eef2f5', resettable: true }
       ]},
       { title: 'Call-to-action panel', fields: [
         { t: 'text', path: 'home.ctaHome.kicker', label: 'Small label' },
@@ -340,7 +346,8 @@
         { t: 'listobjects', path: 'services.lines.0.subservices', label: 'Sub-services', itemNoun: 'service',
           itemTitle: function (it) { return it.title || 'New service'; },
           defaultItem: function () { return { title: 'New service', text: '' }; },
-          fields: [ { key: 'title', label: 'Title', t: 'text' }, { key: 'text', label: 'Description', t: 'textarea', rows: 2 } ] }
+          fields: [ { key: 'title', label: 'Title', t: 'text' }, { key: 'text', label: 'Description', t: 'textarea', rows: 2 } ] },
+        { t: 'color', path: 'services.lines.0.sectionBg', label: 'Section background color', default: '#ffffff', resettable: true }
       ]},
       { title: 'Structural Steel', fields: [
         { t: 'text', path: 'services.lines.1.kicker', label: 'Small label' },
@@ -349,7 +356,8 @@
         { t: 'listobjects', path: 'services.lines.1.subservices', label: 'Sub-services', itemNoun: 'service',
           itemTitle: function (it) { return it.title || 'New service'; },
           defaultItem: function () { return { title: 'New service', text: '' }; },
-          fields: [ { key: 'title', label: 'Title', t: 'text' }, { key: 'text', label: 'Description', t: 'textarea', rows: 2 } ] }
+          fields: [ { key: 'title', label: 'Title', t: 'text' }, { key: 'text', label: 'Description', t: 'textarea', rows: 2 } ] },
+        { t: 'color', path: 'services.lines.1.sectionBg', label: 'Section background color', default: '#102a45', resettable: true, hint: 'This section is dark by default — pick a dark color if you change it.' }
       ]},
       { title: 'Telecommunications', fields: [
         { t: 'text', path: 'services.lines.2.kicker', label: 'Small label' },
@@ -358,7 +366,8 @@
         { t: 'listobjects', path: 'services.lines.2.subservices', label: 'Sub-services', itemNoun: 'service',
           itemTitle: function (it) { return it.title || 'New service'; },
           defaultItem: function () { return { title: 'New service', text: '' }; },
-          fields: [ { key: 'title', label: 'Title', t: 'text' }, { key: 'text', label: 'Description', t: 'textarea', rows: 2 } ] }
+          fields: [ { key: 'title', label: 'Title', t: 'text' }, { key: 'text', label: 'Description', t: 'textarea', rows: 2 } ] },
+        { t: 'color', path: 'services.lines.2.sectionBg', label: 'Section background color', default: '#ffffff', resettable: true }
       ]}
     ]},
 
@@ -400,7 +409,8 @@
       { title: 'Project gallery', fields: [
         { t: 'text', path: 'projects.gallery.kicker', label: 'Small label' },
         { t: 'text', path: 'projects.gallery.heading', label: 'Heading' },
-        { t: 'gallery', path: 'projects.gallery.categories', label: 'Gallery categories & photos' }
+        { t: 'gallery', path: 'projects.gallery.categories', label: 'Gallery categories & photos' },
+        { t: 'color', path: 'projects.gallery.sectionBg', label: 'Section background color', default: '#ffffff', resettable: true }
       ]},
       { title: 'Team photo', fields: [
         { t: 'image', path: 'projects.teamPhoto.image', label: 'Photo' },
@@ -760,6 +770,7 @@
       case 'fixedlist': return renderFixedList(field, getPath(state.content, field.path) || []);
       case 'gallery': return renderGallery(field, getPath(state.content, field.path) || []);
       case 'color': return renderColor(field);
+      case 'select': return renderSelectField(field);
       default: return '';
     }
   }
@@ -785,12 +796,21 @@
   }
 
   function renderColor(field) {
-    var val = getPath(state.content, field.path) || field.default || '#000000';
+    var raw = getPath(state.content, field.path);
+    var val = raw || field.default || '#000000';
     return '<div class="f"><label>' + escapeHtml(field.label) + '</label>' +
       '<div class="color-field">' +
         '<input type="color" data-path="' + escapeAttr(field.path) + '" value="' + escapeAttr(val) + '">' +
         '<span class="color-value">' + escapeHtml(val) + '</span>' +
+        (field.resettable ? '<button type="button" class="btn btn-ghost btn-sm" data-color-reset="' + escapeAttr(field.path) + '">Reset to default</button>' : '') +
       '</div>' +
+      (field.hint ? '<div class="hint">' + escapeHtml(field.hint) + '</div>' : '') + '</div>';
+  }
+
+  function renderSelectField(field) {
+    var val = getPath(state.content, field.path) || field.default || field.options[0];
+    return '<div class="f"><label>' + escapeHtml(field.label) + '</label>' +
+      renderSelect(field, field.path, val) +
       (field.hint ? '<div class="hint">' + escapeHtml(field.hint) + '</div>' : '') + '</div>';
   }
 
@@ -957,6 +977,16 @@
       el.addEventListener('input', function () {
         var span = el.parentElement.querySelector('.color-value');
         if (span) span.textContent = el.value;
+      });
+    });
+
+    // "Reset to default" on an optional section-background color — clears the
+    // override so the section falls back to the site's normal color again.
+    $all('[data-color-reset]', root).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setPath(state.content, btn.getAttribute('data-color-reset'), '');
+        markDirty();
+        renderTabContent(SCHEMA.filter(function (t) { return t.id === state.activeTab; })[0]);
       });
     });
 

@@ -45,8 +45,18 @@
   }
 
   function renderFeaturedGrid(container, cards) {
+    container.className = 'featured-grid';
     container.innerHTML = cards.map(function (c) {
       return '<div class="featured-card"><div class="fc-image"><span>' + escapeHtml(c.tag) +
+        '</span><img loading="lazy" src="' + escapeHtml(c.image) + '" alt="' + escapeHtml(c.imageAlt || '') +
+        '"></div><div class="fc-body"><h3>' + escapeHtml(c.title) + '</h3><p>' + escapeHtml(c.text) + '</p></div></div>';
+    }).join('');
+  }
+
+  function renderFeaturedList(container, cards) {
+    container.className = 'featured-list';
+    container.innerHTML = cards.map(function (c) {
+      return '<div class="featured-list-item"><div class="fc-image"><span>' + escapeHtml(c.tag) +
         '</span><img loading="lazy" src="' + escapeHtml(c.image) + '" alt="' + escapeHtml(c.imageAlt || '') +
         '"></div><div class="fc-body"><h3>' + escapeHtml(c.title) + '</h3><p>' + escapeHtml(c.text) + '</p></div></div>';
     }).join('');
@@ -116,8 +126,14 @@
     document.querySelectorAll('[data-bind-list]').forEach(function (el) {
       var path = el.getAttribute('data-bind-list');
       var val = getPath(data, path);
+      if (!val) return;
+      var layoutPath = el.getAttribute('data-layout-path');
+      if (layoutPath && getPath(data, layoutPath) === 'list') {
+        renderFeaturedList(el, val);
+        return;
+      }
       var renderer = LIST_RENDERERS[path];
-      if (val && renderer) renderer(el, val);
+      if (renderer) renderer(el, val);
     });
     var galleryEl = document.querySelector('[data-bind-gallery]');
     if (galleryEl) {
@@ -189,6 +205,23 @@
     return await localRes.json();
   }
 
+  function applySectionBackgrounds(data) {
+    document.querySelectorAll('[data-section-bg]').forEach(function (el) {
+      var path = el.getAttribute('data-section-bg');
+      var val = getPath(data, path);
+      if (val) el.style.backgroundColor = val;
+    });
+  }
+
+  function applyGridColumns(data) {
+    document.querySelectorAll('[data-grid-columns]').forEach(function (el) {
+      var path = el.getAttribute('data-grid-columns');
+      var val = getPath(data, path);
+      var n = parseInt(val, 10);
+      if (n && n > 0) el.style.gridTemplateColumns = 'repeat(' + n + ', 1fr)';
+    });
+  }
+
   function applyTheme(data) {
     var theme = data.global && data.global.theme;
     if (!theme) return;
@@ -205,6 +238,8 @@
       applyListBindings(data);
       applyLinkRewrites(data);
       applyTheme(data);
+      applySectionBackgrounds(data);
+      applyGridColumns(data);
       if (data.global && data.global.metaDescription) {
         var md = document.querySelector('meta[name="description"]');
         if (md) md.setAttribute('content', data.global.metaDescription);
