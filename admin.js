@@ -62,7 +62,18 @@
       if (typeof supabase === 'undefined' || !supabase.createClient) {
         throw new Error('Could not load the Supabase library. Check your internet connection and reload the page.');
       }
-      sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: {
+          // Mobile-carrier proxies have been seen serving stale cached
+          // responses for this site before (same issue as the old GitHub
+          // flow) — force every request to skip any cache.
+          fetch: function (input, init) {
+            init = init || {};
+            init.cache = 'no-store';
+            return fetch(input, init);
+          }
+        }
+      });
     }
     return sbClient;
   }
@@ -100,8 +111,15 @@
       return getClient().from('site_content')
         .update({ data: data, updated_at: new Date().toISOString() })
         .eq('id', 1)
+        .select('id')
         .then(function (res) {
           if (res.error) throw new Error('Could not save: ' + res.error.message);
+          // Supabase can report success even when the update matched zero
+          // rows (e.g. a security-policy or row-id mismatch) — catch that
+          // silent failure here instead of showing "Saved" when nothing changed.
+          if (!res.data || res.data.length === 0) {
+            throw new Error('Save did not apply — no matching content row was found. Check that the setup SQL ran successfully and that you are signed in correctly.');
+          }
         });
     },
     // Upload a File/Blob and resolve with its public URL.
