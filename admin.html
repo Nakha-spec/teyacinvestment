@@ -54,7 +54,8 @@
     cursor:pointer; transition:background .15s, transform .1s, box-shadow .15s;
   }
   .btn:active{transform:scale(.98);}
-  .btn-primary{background:var(--accent); color:#fff; width:100%;}
+  .btn-primary{background:var(--accent); color:#fff;}
+  #loginForm .btn-primary, #googleSignInBtn{width:100%;}
   .btn-primary:hover{background:var(--accent-dark);}
   .btn-primary:disabled{background:#c9b6a3; cursor:not-allowed;}
   .btn-ghost{background:transparent; color:var(--navy); border:1px solid var(--line);}
@@ -115,9 +116,10 @@
   .topbar .status.dirty{color:var(--accent-dark); font-weight:700;}
   .topbar .status.saved{color:var(--green-dark); font-weight:700;}
   .topbar .status.error{color:var(--red); font-weight:700;}
-  .topbar-actions{display:flex; align-items:center; gap:10px;}
+  .topbar-actions{display:flex; align-items:center; gap:10px; flex-shrink:0;}
+  .topbar-actions .status, .topbar-actions .btn{white-space:nowrap; flex-shrink:0;}
+  .topbar h2{flex-shrink:1; min-width:0; overflow:hidden; text-overflow:ellipsis;}
 
-  .content{padding:26px 28px 70px; max-width:880px;}
   .group{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:20px; overflow:hidden; transition:box-shadow .2s; box-shadow:0 1px 2px rgba(15,36,54,.04);}
   .group:hover{box-shadow:0 6px 18px rgba(15,36,54,.08);}
   .group-head{padding:14px 20px; border-bottom:1px solid var(--line); background:#fafbfc;}
@@ -183,6 +185,9 @@
 
   .toggle-row{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
   .toggle-row input{width:17px; height:17px;}
+  .checkbox-row{display:flex; align-items:center; gap:9px; cursor:pointer; font-weight:700 !important; color:var(--navy) !important;}
+  .checkbox-row input{width:16px; height:16px; margin:0;}
+  .f input[type=date]{width:auto; min-width:160px;}
 
   /* ---------- Color picker fields ---------- */
   .color-field{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
@@ -217,6 +222,85 @@
   .msg-card .detail{font-size:13px; color:var(--ink); line-height:1.6; margin:3px 0; word-break:break-word;}
   .msg-card .detail b{color:var(--muted); font-weight:600;}
   .msg-empty{color:var(--muted); font-size:13.5px; padding:30px; text-align:center;}
+
+  /* ---------- Login split-screen ---------- */
+  #loginScreen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:0;
+    background:linear-gradient(135deg,#0f2436,#1c3f54 55%,#0f2436);
+  }
+  .login-shell{
+    display:flex; width:100%; max-width:1180px; min-height:640px; margin:28px;
+    border-radius:18px; overflow:hidden; box-shadow:0 30px 70px -20px rgba(0,0,0,.55);
+  }
+  .login-info{
+    flex:1 1 50%; background:linear-gradient(160deg,#0d2033,#163449 60%,#0d2033);
+    color:#eaf0f4; padding:48px 44px; display:flex; flex-direction:column; justify-content:center; position:relative;
+  }
+  .login-info .login-logo img{height:40px; border-radius:6px;}
+  .login-info-tag{font-size:11px; font-weight:700; letter-spacing:.16em; color:var(--accent); margin:18px 0 10px;}
+  .login-info-title{font-size:40px; line-height:1.12; font-weight:800; margin:0 0 14px; color:#fff;}
+  .login-info-sub{font-size:14.5px; color:#b9c7d1; line-height:1.6; max-width:420px; margin:0 0 28px;}
+  .login-feature-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:16px;}
+  .login-feature-list li{display:flex; align-items:center; gap:14px;}
+  .feat-icon{
+    width:42px; height:42px; flex:0 0 42px; border-radius:10px; background:rgba(200,115,47,.18);
+    display:flex; align-items:center; justify-content:center; font-size:19px;
+  }
+  .login-feature-list b{display:block; color:#fff; font-size:13.5px;}
+  .login-feature-list span{display:block; color:#9db0bd; font-size:12px; margin-top:1px;}
+
+  .login-card{
+    flex:1 1 50%; background:var(--card); max-width:560px; width:100%;
+    padding:40px 42px 34px; display:flex; flex-direction:column; justify-content:center; overflow-y:auto;
+  }
+  .login-card-kicker{font-size:11px; font-weight:700; letter-spacing:.14em; color:var(--muted); text-align:center; margin:2px 0 14px;}
+  .login-card h1{font-size:20px; margin:0 0 4px; text-align:center;}
+  .login-card p.sub{text-align:center;}
+  .login-options-row{display:flex; align-items:center; justify-content:space-between; margin:-6px 0 16px; font-size:12.5px;}
+  .remember-row{display:flex; align-items:center; gap:7px; color:var(--ink); cursor:pointer;}
+  .remember-row input{width:14px; height:14px;}
+  .login-options-row a{color:var(--accent-dark); font-weight:600; text-decoration:none;}
+  .login-options-row a:hover{text-decoration:underline;}
+  .or-divider{display:flex; align-items:center; gap:12px; margin:20px 0; color:var(--muted); font-size:11.5px; font-weight:700; letter-spacing:.08em;}
+  .or-divider::before, .or-divider::after{content:""; flex:1; height:1px; background:var(--line);}
+  #googleSignInBtn{display:inline-flex; align-items:center; justify-content:center; gap:10px;}
+  .restricted-note{
+    margin-top:20px; padding:12px 14px; background:#f3f6f8; border:1px solid var(--line); border-radius:8px;
+    font-size:12px; color:var(--muted); line-height:1.5; display:flex; gap:8px; align-items:flex-start;
+  }
+  @media (max-width:860px){
+    .login-shell{flex-direction:column; min-height:0; margin:0; border-radius:0;}
+    .login-info{padding:34px 24px;}
+    .login-info-title{font-size:30px;}
+    .login-card{padding:32px 24px;}
+  }
+
+  /* ---------- Content area with preview/tips sidebar ---------- */
+  .content{display:flex; align-items:flex-start; gap:22px; padding:26px 28px 70px;}
+  .content-main{flex:1; min-width:0; max-width:880px;}
+  .content-sidebar{
+    width:300px; flex:0 0 300px; display:flex; flex-direction:column; gap:16px;
+    position:sticky; top:78px;
+  }
+  .side-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; box-shadow:0 1px 2px rgba(15,36,54,.04);}
+  .side-card-head{display:flex; align-items:center; justify-content:space-between; font-size:13px; font-weight:700; color:var(--navy); margin-bottom:10px;}
+  .side-card-head a{font-size:12px; font-weight:600; color:var(--accent-dark); text-decoration:none;}
+  .side-card-head a:hover{text-decoration:underline;}
+  .preview-frame-wrap{width:100%; height:150px; overflow:hidden; border-radius:8px; border:1px solid var(--line); background:#eef1f3;}
+  .preview-frame-wrap iframe{display:block; width:100%; height:100%; border:0; pointer-events:none;}
+  .tips-list{margin:0; padding-left:18px; font-size:12.5px; color:var(--ink); line-height:1.6;}
+  .tips-list li{margin-bottom:8px;}
+  .tips-list li:last-child{margin-bottom:0;}
+  .status-row{display:flex; align-items:flex-start; gap:10px;}
+  .status-dot{width:11px; height:11px; border-radius:50%; background:var(--green-dark); flex:0 0 11px; margin-top:3px;}
+  .status-dot.dirty{background:var(--accent-dark);}
+  .status-dot.error{background:var(--red);}
+  .status-title{font-size:13px; font-weight:700; color:var(--navy);}
+
+  @media (max-width:860px){
+    .content{flex-direction:column; padding:18px 14px 60px;}
+    .content-sidebar{width:100%; flex:none; position:static;}
+  }
 
   /* ---------- Dashboard tab ---------- */
   .dash-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:20px;}
@@ -264,31 +348,58 @@
 
 <!-- ============ LOGIN SCREEN ============ -->
 <div id="loginScreen">
-  <div class="login-card">
-    <div class="login-logo">
-      <img src="images/teyac-construction-logo.jpg" alt="TEYAC">
-      <div class="word">TEYAC <span>WEBSITE ADMIN</span></div>
+  <div class="login-shell">
+    <div class="login-info">
+      <div class="login-logo">
+        <img src="images/teyac-construction-logo.jpg" alt="TEYAC">
+        <div class="word" style="color:#fff;">TEYAC <span style="color:#8ea2b2;">INVESTMENTS</span></div>
+      </div>
+      <div class="login-info-tag">BUILDING TODAY FOR A BETTER TOMORROW</div>
+      <h1 class="login-info-title">Website<br>Administration</h1>
+      <p class="login-info-sub">Manage your website content easily. Update text, images, services and projects in real time — no coding required.</p>
+      <ul class="login-feature-list">
+        <li><span class="feat-icon">&#128196;</span><div><b>Edit Content</b><span>Update text, images and more</span></div></li>
+        <li><span class="feat-icon">&#128188;</span><div><b>Manage Projects</b><span>Add, edit and organise projects</span></div></li>
+        <li><span class="feat-icon">&#9881;&#65039;</span><div><b>Manage Services</b><span>Keep your services up to date</span></div></li>
+        <li><span class="feat-icon">&#128202;</span><div><b>View Enquiries</b><span>Track and respond to enquiries</span></div></li>
+      </ul>
     </div>
-    <h1>Sign in to edit your website</h1>
-    <p class="sub">Update text, photos and project details on teyacinvestments.co.zw without touching any code. Changes go live within a few seconds of saving.</p>
 
-    <div id="loginError" class="error-box"></div>
-
-    <form id="loginForm">
-      <div class="field">
-        <label for="fEmail">Email</label>
-        <input type="text" id="fEmail" placeholder="you@example.com" autocomplete="username">
+    <div class="login-card">
+      <div class="login-logo" style="justify-content:center; margin-bottom:2px;">
+        <img src="images/teyac-construction-logo.jpg" alt="TEYAC">
+        <div class="word">TEYAC <span>INVESTMENTS</span></div>
       </div>
-      <div class="field">
-        <label for="fPassword">Password</label>
-        <input type="password" id="fPassword" placeholder="Your password" autocomplete="current-password">
-      </div>
-      <button type="submit" class="btn btn-primary" id="loginBtn">Sign in</button>
-    </form>
+      <div class="login-card-kicker">WEBSITE ADMINISTRATOR</div>
+      <h1>Sign in to your account</h1>
+      <p class="sub">Access the TEYAC website admin dashboard.</p>
 
-    <p style="font-size:12.5px; color:var(--muted); margin-top:18px; line-height:1.6;">
-      Your account is set up once by whoever manages the site. If you've forgotten your password or need an account created, ask them to reset it from the Supabase project dashboard.
-    </p>
+      <div id="loginError" class="error-box"></div>
+
+      <form id="loginForm">
+        <div class="field">
+          <label for="fEmail">Email</label>
+          <input type="text" id="fEmail" placeholder="you@example.com" autocomplete="username">
+        </div>
+        <div class="field">
+          <label for="fPassword">Password</label>
+          <input type="password" id="fPassword" placeholder="Your password" autocomplete="current-password">
+        </div>
+        <div class="login-options-row">
+          <label class="remember-row"><input type="checkbox" id="rememberMeBox" checked> Remember me</label>
+          <a href="#" id="forgotPasswordLink">Forgot password?</a>
+        </div>
+        <button type="submit" class="btn btn-primary" id="loginBtn">Sign in</button>
+      </form>
+
+      <div class="or-divider"><span>OR</span></div>
+      <button type="button" class="btn btn-ghost" id="googleSignInBtn" style="width:100%;">
+        <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.6 6.5 29.6 4.5 24 4.5 12.9 4.5 4 13.4 4 24.5S12.9 44.5 24 44.5 44 35.6 44 24.5c0-1.4-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 18.9 13 24 13c3.1 0 5.8 1.1 8 3l5.7-5.7C34.6 7 29.6 5 24 5c-7.5 0-14 4.2-17.7 10.4z"/><path fill="#4CAF50" d="M24 44.5c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.4C29.7 35.7 27 36.5 24 36.5c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.9 40.2 16.4 44.5 24 44.5z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.2 5.5l6.6 5.4C41.6 35.5 44 30.5 44 24.5c0-1.4-.1-2.7-.4-4z"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="restricted-note">&#128737;&#65039; This is a restricted area. Only authorised administrators can access and manage the website content.</div>
+    </div>
   </div>
 </div>
 
@@ -316,7 +427,26 @@
         <button class="btn btn-primary btn-sm" id="saveBtn">Save changes</button>
       </div>
     </div>
-    <div class="content" id="tabContent"></div>
+    <div class="content" id="contentArea">
+      <div class="content-main" id="tabContent"></div>
+      <aside class="content-sidebar" id="tabSidebar">
+        <div class="side-card">
+          <div class="side-card-head"><span>&#128065;&#65039; Website preview</span><a href="index.html" target="_blank" rel="noopener" id="sidePreviewLink">View live &#8599;</a></div>
+          <div class="preview-frame-wrap"><iframe id="previewFrame" src="index.html" title="Website preview" tabindex="-1" loading="lazy"></iframe></div>
+        </div>
+        <div class="side-card">
+          <div class="side-card-head"><span>&#128161; Quick tips</span></div>
+          <ol class="tips-list" id="sideTipsList"></ol>
+        </div>
+        <div class="side-card">
+          <div class="side-card-head"><span>Publishing status</span></div>
+          <div class="status-row">
+            <span class="status-dot" id="sideStatusDot"></span>
+            <div><div class="status-title" id="sideStatusTitle">All changes saved</div><div class="hint" id="sideStatusSub">Your changes will be live on the website once saved.</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
   </div>
 </div>
 

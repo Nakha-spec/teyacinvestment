@@ -222,6 +222,70 @@
     });
   }
 
+  function getDismissedAnnouncements() {
+    try { return JSON.parse(localStorage.getItem('teyac_dismissed_announcements') || '[]'); } catch (e) { return []; }
+  }
+  function dismissAnnouncement(id) {
+    try {
+      var list = getDismissedAnnouncements();
+      if (list.indexOf(id) === -1) {
+        list.push(id);
+        localStorage.setItem('teyac_dismissed_announcements', JSON.stringify(list));
+      }
+    } catch (e) {}
+  }
+  function updateAnnounceOffset() {
+    var bar = document.getElementById('announcements-bar');
+    var h = bar ? bar.offsetHeight : 0;
+    document.documentElement.style.setProperty('--announce-h', h + 'px');
+  }
+
+  function renderAnnouncements(data) {
+    var container = document.getElementById('announcements-bar');
+    if (!container) return;
+    var items = (data.announcements && data.announcements.items) || [];
+    var todayStr = new Date().toISOString().slice(0, 10);
+    var dismissed = getDismissedAnnouncements();
+
+    var active = [];
+    items.forEach(function (a, i) {
+      if (a.enabled === false) return;
+      if (a.startDate && a.startDate > todayStr) return;
+      if (a.endDate && a.endDate < todayStr) return;
+      var id = 'a' + i + ':' + (a.title || '');
+      if (dismissed.indexOf(id) !== -1) return;
+      active.push({ a: a, id: id });
+    });
+
+    if (!active.length) {
+      container.innerHTML = '';
+      updateAnnounceOffset();
+      return;
+    }
+
+    container.innerHTML = active.map(function (entry) {
+      var a = entry.a;
+      return '<div class="announce-bar announce-' + (a.kind === 'urgent' ? 'urgent' : 'banner') + '" data-announce-id="' + escapeHtml(entry.id) + '">' +
+        (a.image ? '<img class="announce-img" loading="lazy" src="' + escapeHtml(a.image) + '" alt="' + escapeHtml(a.imageAlt || '') + '">' : '') +
+        '<div class="announce-text"><b>' + escapeHtml(a.title || '') + '</b>' + (a.message ? '<span>' + escapeHtml(a.message) + '</span>' : '') + '</div>' +
+        (a.link ? '<a class="announce-link" href="' + escapeHtml(a.link) + '" target="_blank" rel="noopener">' + escapeHtml(a.linkText || 'Learn more') + '</a>' : '') +
+        '<button type="button" class="announce-close" aria-label="Dismiss this announcement">&times;</button>' +
+        '</div>';
+    }).join('');
+
+    container.querySelectorAll('.announce-close').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var bar = btn.closest('.announce-bar');
+        dismissAnnouncement(bar.getAttribute('data-announce-id'));
+        bar.remove();
+        updateAnnounceOffset();
+      });
+    });
+
+    updateAnnounceOffset();
+    window.addEventListener('resize', updateAnnounceOffset);
+  }
+
   function applyTheme(data) {
     var theme = data.global && data.global.theme;
     if (!theme) return;
@@ -240,6 +304,7 @@
       applyTheme(data);
       applySectionBackgrounds(data);
       applyGridColumns(data);
+      renderAnnouncements(data);
       if (data.global && data.global.metaDescription) {
         var md = document.querySelector('meta[name="description"]');
         if (md) md.setAttribute('content', data.global.metaDescription);

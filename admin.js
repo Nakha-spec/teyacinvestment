@@ -105,6 +105,22 @@
         if (res.error) throw new Error('Could not change password: ' + res.error.message);
       });
     },
+    // Send a password-reset email. Supabase doesn't reveal whether the
+    // address has an account either way, so the caller should always show
+    // a neutral "check your email" message.
+    resetPassword: function (email) {
+      return getClient().auth.resetPasswordForEmail(email).then(function (res) {
+        if (res.error) throw new Error('Could not send reset email: ' + res.error.message);
+      });
+    },
+    // Start Google OAuth sign-in. On success the browser is redirected away
+    // by Supabase itself; on failure (most commonly: the Google provider
+    // hasn't been turned on for this project yet) this rejects.
+    signInWithGoogle: function () {
+      return getClient().auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } }).then(function (res) {
+        if (res.error) throw new Error(res.error.message || 'Google sign-in failed.');
+      });
+    },
     // Read the single content row.
     getContent: function () {
       return getClient().from('site_content').select('data').eq('id', 1).single().then(function (res) {
@@ -482,6 +498,25 @@
       ]}
     ]},
 
+    { id: 'announcements', label: 'Announcements', groups: [
+      { title: 'Site announcements', hint: 'Shown as a banner at the very top of every page, above the header. "Urgent" style stands out in red. Leave the dates blank to show immediately with no expiry — set them to schedule or auto-remove an announcement.', fields: [
+        { t: 'listobjects', path: 'announcements.items', label: 'Announcements', itemNoun: 'announcement',
+          itemTitle: function (it) { return it.title || 'New announcement'; },
+          defaultItem: function () { return { title: 'New announcement', message: '', kind: 'banner', image: '', imageAlt: '', link: '', linkText: '', startDate: '', endDate: '', enabled: true }; },
+          fields: [
+            { key: 'enabled', label: 'Published (visible on the website)', t: 'checkbox' },
+            { key: 'title', label: 'Title', t: 'text' },
+            { key: 'message', label: 'Message', t: 'textarea', rows: 2 },
+            { key: 'kind', label: 'Style', t: 'select', options: ['banner', 'urgent'] },
+            { key: 'image', label: 'Small photo (optional)', t: 'image' },
+            { key: 'link', label: 'Link URL (optional)', t: 'text' },
+            { key: 'linkText', label: 'Link button text', t: 'text' },
+            { key: 'startDate', label: 'Show from (optional)', t: 'date' },
+            { key: 'endDate', label: 'Hide after (optional)', t: 'date' }
+          ] }
+      ]}
+    ]},
+
     { id: 'footer', label: 'Footer', groups: [
       { title: 'Footer text', fields: [
         { t: 'textarea', path: 'footer.description', label: 'Company description', rows: 3 },
@@ -544,6 +579,10 @@
     var el = $('#statusText');
     el.textContent = text;
     el.className = 'status' + (kind ? ' ' + kind : '');
+    var sideTitle = $('#sideStatusTitle');
+    var sideDot = $('#sideStatusDot');
+    if (sideTitle) sideTitle.textContent = text;
+    if (sideDot) sideDot.className = 'status-dot' + (kind ? ' ' + kind : '');
   }
   function markDirty() {
     state.dirty = true;
@@ -563,7 +602,8 @@
   function loadAfterAuth(email) {
     return DB.getContent().then(function (data) {
       state.content = data;
-      if (email) rememberEmail(email);
+      var wantsRemember = !$('#rememberMeBox') || $('#rememberMeBox').checked;
+      if (email && wantsRemember) rememberEmail(email);
       enterDashboard(email);
     });
   }
@@ -595,6 +635,35 @@
       if (!email) { showError('Enter your email address.'); return; }
       if (!password) { showError('Enter your password.'); return; }
       attemptLogin(email, password);
+    });
+
+    $('#forgotPasswordLink') && $('#forgotPasswordLink').addEventListener('click', function (e) {
+      e.preventDefault();
+      var link = this;
+      var email = $('#fEmail').value.trim();
+      if (!email) { showError('Enter your email address above, then click "Forgot password?" again.'); return; }
+      hideError();
+      var original = link.textContent;
+      link.textContent = 'Sending…';
+      DB.resetPassword(email)
+        .then(function () {
+          link.textContent = original;
+          toast('If that email has an account, a password reset link has been sent to it.', 'ok');
+        })
+        .catch(function (err) {
+          link.textContent = original;
+          showError(err.message || 'Could not send the reset email. Please try again.');
+        });
+    });
+
+    $('#googleSignInBtn') && $('#googleSignInBtn').addEventListener('click', function () {
+      var btn = this;
+      btn.disabled = true;
+      hideError();
+      DB.signInWithGoogle().catch(function () {
+        btn.disabled = false;
+        showError('Google sign-in isn’t turned on for this site yet. Ask whoever manages the Supabase project to enable the Google provider under Authentication → Providers, or sign in with email and password instead.');
+      });
     });
 
     // Already signed in from a previous visit? Supabase keeps the session
@@ -692,6 +761,40 @@
     });
   }
 
+  // Which section of the live (single-page) site each tab corresponds to,
+  // for the preview pane — matches the hash routes in index.html.
+  var PAGE_HASH = { global: '', home: 'home', about: 'about', services: 'services', projects: 'projects', contact: 'contact', footer: '', pricing: '', announcements: '' };
+
+  var TIPS = {
+    global: ['Keep your company name and tagline short — they appear in the header on every page.', 'Use the international format for phone numbers, e.g. +263772541729.', 'These details update WhatsApp links and call buttons automatically.'],
+    home: ['Use a high-resolution hero photo (1600px+ wide) for the best look.', 'Keep headlines under 10 words — they read best on mobile.', 'Feature your 2-3 strongest projects in Featured Projects.'],
+    about: ['Keep mission and vision statements short and memorable.', 'Add real team members — a named leadership team builds trust.'],
+    services: ['List your most-requested services first in each group.', 'Use plain language a first-time client would understand.'],
+    projects: ['Add recent, real projects with photos — this is what convinces new clients.', 'Mark finished work "Complete" and current work "Ongoing" to show momentum.'],
+    contact: ['Double-check your phone numbers and address are current.', 'The map updates automatically from your Chipinge office address below.'],
+    footer: ['Keep the footer description to 1-2 sentences — it’s supporting text, not a sales pitch.'],
+    pricing: ['This section isn’t shown on the live site yet — changes here are saved but not visible to visitors.'],
+    announcements: ['An announcement appears as a banner above the header on every page — set "Published" to make it visible.', 'Use "Urgent" style sparingly, for things like safety notices or office closures.', 'Leave the dates blank to show it immediately with no expiry, or set them to schedule or auto-remove it.']
+  };
+
+  function updateSidebarPreview(tabId) {
+    var hash = PAGE_HASH.hasOwnProperty(tabId) ? PAGE_HASH[tabId] : '';
+    var target = 'index.html' + (hash ? '#' + hash : '');
+    var frame = $('#previewFrame');
+    if (frame && frame.getAttribute('data-loaded-for') !== tabId) {
+      frame.src = target;
+      frame.setAttribute('data-loaded-for', tabId);
+    }
+    var link = $('#sidePreviewLink');
+    if (link) link.href = target;
+  }
+
+  function renderSideTips(tabId) {
+    var list = TIPS[tabId] || ['Changes here go live within a few seconds of saving.'];
+    var el = $('#sideTipsList');
+    if (el) el.innerHTML = list.map(function (t) { return '<li>' + escapeHtml(t) + '</li>'; }).join('');
+  }
+
   function switchTab(id) {
     state.activeTab = id;
     $all('#tabList button').forEach(function (b) {
@@ -699,33 +802,24 @@
     });
     window.scrollTo(0, 0);
 
-    if (id === '__dashboard') {
-      $('#tabTitle').textContent = 'Dashboard';
+    if (id === '__dashboard' || id === '__messages' || id === '__media') {
+      $('#tabSidebar').style.display = 'none';
       $('#saveBtn').style.display = 'none';
       $('#statusText').style.display = 'none';
-      loadDashboardTab();
+      if (id === '__dashboard') { $('#tabTitle').textContent = 'Dashboard'; loadDashboardTab(); }
+      else if (id === '__messages') { $('#tabTitle').textContent = 'Messages'; loadMessagesTab(); }
+      else { $('#tabTitle').textContent = 'Media Library'; loadMediaTab(); }
       return;
     }
-    if (id === '__messages') {
-      $('#tabTitle').textContent = 'Messages';
-      $('#saveBtn').style.display = 'none';
-      $('#statusText').style.display = 'none';
-      loadMessagesTab();
-      return;
-    }
-    if (id === '__media') {
-      $('#tabTitle').textContent = 'Media Library';
-      $('#saveBtn').style.display = 'none';
-      $('#statusText').style.display = 'none';
-      loadMediaTab();
-      return;
-    }
+    $('#tabSidebar').style.display = '';
     $('#saveBtn').style.display = '';
     $('#statusText').style.display = '';
 
     var tab = SCHEMA.filter(function (t) { return t.id === id; })[0];
     $('#tabTitle').textContent = tab.label;
     renderTabContent(tab);
+    updateSidebarPreview(id);
+    renderSideTips(id);
   }
 
   /* ============================================================
@@ -1144,6 +1238,12 @@
     if (sub.t === 'textarea') {
       return '<div class="f"><label>' + escapeHtml(sub.label) + '</label><textarea rows="' + (sub.rows || 2) + '" data-path="' + escapeAttr(path) + '">' + escapeHtml(val || '') + '</textarea></div>';
     }
+    if (sub.t === 'date') {
+      return '<div class="f"><label>' + escapeHtml(sub.label) + '</label><input type="date" data-path="' + escapeAttr(path) + '" value="' + escapeAttr(val || '') + '"></div>';
+    }
+    if (sub.t === 'checkbox') {
+      return '<div class="f"><label class="checkbox-row"><input type="checkbox" data-path="' + escapeAttr(path) + '"' + (val !== false ? ' checked' : '') + '> ' + escapeHtml(sub.label) + '</label></div>';
+    }
     return '<div class="f"><label>' + escapeHtml(sub.label) + '</label><input type="text" data-path="' + escapeAttr(path) + '" value="' + escapeAttr(val || '') + '"></div>';
   }
 
@@ -1253,11 +1353,12 @@
   }
 
   function wireGroupEvents(root) {
-    // plain text/textarea/select inputs bound via data-path
+    // plain text/textarea/select/date/checkbox inputs bound via data-path
     $all('[data-path]', root).forEach(function (el) {
-      var evt = (el.tagName === 'SELECT') ? 'change' : 'input';
+      var isCheckbox = el.type === 'checkbox';
+      var evt = (el.tagName === 'SELECT' || isCheckbox) ? 'change' : 'input';
       el.addEventListener(evt, function () {
-        setPath(state.content, el.getAttribute('data-path'), el.value);
+        setPath(state.content, el.getAttribute('data-path'), isCheckbox ? el.checked : el.value);
         markDirty();
       });
     });

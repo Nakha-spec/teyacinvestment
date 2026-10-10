@@ -73,6 +73,15 @@ footer{padding:60px 0 0;background:#06111d;color:#9eb0bf}.footer-top{display:gri
 @media(max-width:460px){h1,.page-hero h1{font-size:clamp(2.2rem,10vw,4.25rem)}}
 .featured-list{display:flex;flex-direction:column;gap:18px;margin-top:42px}.featured-list-item{display:flex;gap:20px;align-items:stretch;background:#fff;border:1px solid #d9e1e7;border-radius:4px;overflow:hidden}.featured-list-item .fc-image{position:relative;overflow:hidden;background:var(--navy);flex:0 0 220px}.featured-list-item .fc-image img{width:100%;height:100%;min-height:140px;object-fit:cover;display:block}.featured-list-item .fc-image>span{position:absolute;left:0;top:0;padding:7px 12px;background:var(--orange);color:#fff;font-weight:700;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase}.featured-list-item .fc-body{padding:22px 24px;display:flex;flex-direction:column;justify-content:center}.featured-list-item .fc-body h3{margin:0 0 8px;font-family:var(--display);font-size:1.3rem}.featured-list-item .fc-body p{margin:0;color:var(--muted)}@media(max-width:700px){.featured-list-item{flex-direction:column}.featured-list-item .fc-image{flex:none;height:160px}}
 .testimonial-section{background:var(--mist)}.testimonial-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}.testimonial-card{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:28px 26px;box-shadow:var(--shadow)}.testimonial-card q{display:block;font-family:var(--body);font-size:15px;line-height:1.65;color:var(--ink);margin:0 0 18px;font-style:normal;quotes:none}.testimonial-card .who{font-weight:800;color:var(--navy);font-size:14px}.testimonial-card .role{font-size:12.5px;color:var(--muted);margin-top:2px}@media(max-width:860px){.testimonial-grid{grid-template-columns:1fr}}
+:root{--announce-h:0px}body{padding-top:var(--announce-h);transition:padding-top .2s}.site-header{top:var(--announce-h);transition:top .2s}
+#announcements-bar{position:fixed;top:0;left:0;right:0;z-index:1001}#announcements-bar:empty{display:none}
+.announce-bar{display:flex;align-items:center;gap:14px;padding:11px 20px;font:600 .86rem/1.4 var(--body);color:#fff;background:var(--blue);border-bottom:1px solid rgba(255,255,255,.18)}
+.announce-bar.announce-urgent{background:#c0392b}
+.announce-img{width:34px;height:34px;border-radius:4px;object-fit:cover;flex:0 0 34px}
+.announce-text{flex:1;min-width:0}.announce-text b{margin-right:8px;font-weight:800}.announce-text span{color:rgba(255,255,255,.88);font-weight:500}
+.announce-link{flex:0 0 auto;color:#fff;text-decoration:underline;font-weight:700;white-space:nowrap}
+.announce-close{flex:0 0 auto;background:none;border:0;color:#fff;font-size:22px;line-height:1;cursor:pointer;padding:0 2px;opacity:.75}.announce-close:hover{opacity:1}
+@media(max-width:650px){.announce-bar{padding:9px 14px;font-size:.8rem;gap:10px}.announce-img{display:none}.announce-text b{display:block;margin-bottom:2px}}
 </style>
 </head>
 <body>
@@ -91,6 +100,7 @@ footer{padding:60px 0 0;background:#06111d;color:#9eb0bf}.footer-top{display:gri
 </nav>
 </div>
 </header>
+<div aria-live="polite" id="announcements-bar"></div>
 <main class="page-view" data-page="home" id="main">
 <section class="hero">
 <img alt="TEYAC construction crew casting a reinforced concrete foundation, full site view with rebar cage and concrete mixers" class="hero-image" data-bind-img="home.hero.image" src="images/teyac-construction-crew-casting-a-reinforced-con.jpg"/>
