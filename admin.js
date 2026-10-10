@@ -72,6 +72,13 @@
             init.cache = 'no-store';
             return fetch(input, init);
           }
+        },
+        auth: {
+          // By request: don't keep anyone signed in between visits. With
+          // persistSession off, the session lives only in memory for the
+          // current page — closing the tab or reloading always lands back
+          // on the sign-in form, even if you just signed in a minute ago.
+          persistSession: false
         }
       });
     }
@@ -501,18 +508,27 @@
     { id: 'announcements', label: 'Announcements', groups: [
       { title: 'Site announcements', hint: 'Shown as a banner at the very top of every page, above the header. "Urgent" style stands out in red. Leave the dates blank to show immediately with no expiry — set them to schedule or auto-remove an announcement.', fields: [
         { t: 'listobjects', path: 'announcements.items', label: 'Announcements', itemNoun: 'announcement',
+          allowEmpty: true,
           itemTitle: function (it) { return it.title || 'New announcement'; },
+          itemBadge: function (it) {
+            var live = it.enabled !== false;
+            return '<span class="pill ' + (live ? 'pill-live' : 'pill-draft') + '">' + (live ? 'Published' : 'Draft') + '</span>' +
+              (it.kind === 'urgent' ? '<span class="pill pill-urgent">Urgent</span>' : '');
+          },
+          itemClass: function (it) {
+            return (it.kind === 'urgent' ? 'kind-urgent' : 'kind-banner') + (it.enabled === false ? ' is-draft' : '');
+          },
           defaultItem: function () { return { title: 'New announcement', message: '', kind: 'banner', image: '', imageAlt: '', link: '', linkText: '', startDate: '', endDate: '', enabled: true }; },
           fields: [
-            { key: 'enabled', label: 'Published (visible on the website)', t: 'checkbox' },
+            { key: 'enabled', label: 'Published (visible on the website)', t: 'checkbox', half: true },
+            { key: 'kind', label: 'Style', t: 'select', options: ['banner', 'urgent'], half: true },
             { key: 'title', label: 'Title', t: 'text' },
             { key: 'message', label: 'Message', t: 'textarea', rows: 2 },
-            { key: 'kind', label: 'Style', t: 'select', options: ['banner', 'urgent'] },
             { key: 'image', label: 'Small photo (optional)', t: 'image' },
-            { key: 'link', label: 'Link URL (optional)', t: 'text' },
-            { key: 'linkText', label: 'Link button text', t: 'text' },
-            { key: 'startDate', label: 'Show from (optional)', t: 'date' },
-            { key: 'endDate', label: 'Hide after (optional)', t: 'date' }
+            { key: 'startDate', label: 'Show from (optional)', t: 'date', half: true },
+            { key: 'endDate', label: 'Hide after (optional)', t: 'date', half: true },
+            { key: 'link', label: 'Link URL (optional)', t: 'text', half: true },
+            { key: 'linkText', label: 'Link button text', t: 'text', half: true }
           ] }
       ]}
     ]},
@@ -666,8 +682,9 @@
       });
     });
 
-    // Already signed in from a previous visit? Supabase keeps the session
-    // in localStorage itself, so just check and skip straight to the dashboard.
+    // Sessions aren't persisted (see persistSession:false above), so this
+    // will only ever find a session within the same still-open page — e.g.
+    // right after a successful sign-in, never after a reload or new visit.
     DB.getSession().then(function (session) {
       if (session && session.user) {
         var btn = $('#loginBtn');
@@ -1216,8 +1233,8 @@
       '</div></div>';
   }
 
-  function itemHeader(noun, idx, title, canMoveUp, canMoveDown, canRemove, listId) {
-    return '<div class="list-item-head"><span class="tag">' + escapeHtml(title) + '</span>' +
+  function itemHeader(noun, idx, title, canMoveUp, canMoveDown, canRemove, listId, badgeHtml) {
+    return '<div class="list-item-head"><span class="tag">' + escapeHtml(title) + '</span>' + (badgeHtml || '') +
       '<div class="item-actions">' +
         (canMoveUp !== undefined ? '<button type="button" class="icon-btn" data-move="-1" data-list="' + listId + '" data-idx="' + idx + '" ' + (canMoveUp ? '' : 'disabled') + ' title="Move up">\u2191</button>' +
         '<button type="button" class="icon-btn" data-move="1" data-list="' + listId + '" data-idx="' + idx + '" ' + (canMoveDown ? '' : 'disabled') + ' title="Move down">\u2193</button>' : '') +
@@ -1229,35 +1246,40 @@
     if (sub.showIf && !sub.showIf(item, idx)) return '';
     var path = basePath + '.' + idx + '.' + sub.key;
     var val = item[sub.key];
+    var cls = 'f' + (sub.half ? ' f-half' : ' f-full');
     if (sub.t === 'image') {
-      return renderImage({ t: 'image', path: path, label: sub.label });
+      return renderImage({ t: 'image', path: path, label: sub.label }).replace('<div class="f">', '<div class="' + cls + '">');
     }
     if (sub.t === 'select') {
-      return '<div class="f"><label>' + escapeHtml(sub.label) + '</label>' + renderSelect(sub, path, val) + '</div>';
+      return '<div class="' + cls + '"><label>' + escapeHtml(sub.label) + '</label>' + renderSelect(sub, path, val) + '</div>';
     }
     if (sub.t === 'textarea') {
-      return '<div class="f"><label>' + escapeHtml(sub.label) + '</label><textarea rows="' + (sub.rows || 2) + '" data-path="' + escapeAttr(path) + '">' + escapeHtml(val || '') + '</textarea></div>';
+      return '<div class="' + cls + '"><label>' + escapeHtml(sub.label) + '</label><textarea rows="' + (sub.rows || 2) + '" data-path="' + escapeAttr(path) + '">' + escapeHtml(val || '') + '</textarea></div>';
     }
     if (sub.t === 'date') {
-      return '<div class="f"><label>' + escapeHtml(sub.label) + '</label><input type="date" data-path="' + escapeAttr(path) + '" value="' + escapeAttr(val || '') + '"></div>';
+      return '<div class="' + cls + '"><label>' + escapeHtml(sub.label) + '</label><input type="date" data-path="' + escapeAttr(path) + '" value="' + escapeAttr(val || '') + '"></div>';
     }
     if (sub.t === 'checkbox') {
-      return '<div class="f"><label class="checkbox-row"><input type="checkbox" data-path="' + escapeAttr(path) + '"' + (val !== false ? ' checked' : '') + '> ' + escapeHtml(sub.label) + '</label></div>';
+      return '<div class="' + cls + ' f-checkbox"><label class="checkbox-row"><input type="checkbox" data-path="' + escapeAttr(path) + '"' + (val !== false ? ' checked' : '') + '> ' + escapeHtml(sub.label) + '</label></div>';
     }
-    return '<div class="f"><label>' + escapeHtml(sub.label) + '</label><input type="text" data-path="' + escapeAttr(path) + '" value="' + escapeAttr(val || '') + '"></div>';
+    return '<div class="' + cls + '"><label>' + escapeHtml(sub.label) + '</label><input type="text" data-path="' + escapeAttr(path) + '" value="' + escapeAttr(val || '') + '"></div>';
   }
 
   function renderListObjects(field, arr) {
     var listId = field.path;
+    var canRemove = field.allowEmpty || arr.length > 1;
     var itemsHtml = arr.map(function (item, idx) {
       var title = field.itemTitle ? field.itemTitle(item, idx) : ('Item ' + (idx + 1));
-      return '<div class="list-item">' +
-        itemHeader(field.itemNoun, idx, title, idx > 0, idx < arr.length - 1, arr.length > 1, listId) +
-        field.fields.map(function (sub) { return renderSubfield(sub, field.path, idx, item); }).join('') +
+      var badgeHtml = field.itemBadge ? field.itemBadge(item, idx) : '';
+      var extraClass = field.itemClass ? (' ' + field.itemClass(item, idx)) : '';
+      return '<div class="list-item' + extraClass + '">' +
+        itemHeader(field.itemNoun, idx, title, idx > 0, idx < arr.length - 1, canRemove, listId, badgeHtml) +
+        '<div class="list-item-fields">' + field.fields.map(function (sub) { return renderSubfield(sub, field.path, idx, item); }).join('') + '</div>' +
         '</div>';
     }).join('');
+    var emptyHint = (field.allowEmpty && !arr.length) ? '<div class="list-empty-hint">None yet — click below to add one.</div>' : '';
     return '<div class="f"><label>' + escapeHtml(field.label) + '</label>' +
-      '<div class="list-items" data-list-container="' + listId + '">' + itemsHtml + '</div>' +
+      '<div class="list-items" data-list-container="' + listId + '">' + itemsHtml + '</div>' + emptyHint +
       '<button type="button" class="add-btn" data-add-item="' + listId + '">+ Add ' + escapeHtml(field.itemNoun || 'item') + '</button>' +
       '</div>';
   }
