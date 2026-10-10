@@ -56,6 +56,20 @@
   var SUPABASE_ANON_KEY = 'sb_publishable_kiVjEhy475NGnw2wkae2qA_IUmBCGSb';
   var STORAGE_BUCKET = 'site-images';
 
+  // Belt-and-suspenders: an older version of this dashboard (before sign-in
+  // was changed to always require a password) may have already saved a
+  // session to this browser's localStorage. persistSession:false below stops
+  // any *new* session from being saved, but won't by itself erase one a past
+  // visit already left behind — so wipe any old Supabase auth entry here,
+  // every time this script runs, before anything can read it.
+  try {
+    for (var lsKey in localStorage) {
+      if (Object.prototype.hasOwnProperty.call(localStorage, lsKey) && /^sb-.*-auth-token$/.test(lsKey)) {
+        localStorage.removeItem(lsKey);
+      }
+    }
+  } catch (e) { /* localStorage unavailable (private mode, etc.) — nothing to clear */ }
+
   var sbClient = null;
   function getClient() {
     if (!sbClient) {
